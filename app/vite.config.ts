@@ -5,6 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    // lightningcss (défaut) bute sur une règle CSS transitive de pdf.js ;
+    // la minification CSS est désactivée (CSS de l'app très petit).
+    cssMinify: false,
+  },
   plugins: [
     react(),
     VitePWA({

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { readProgramFile } from '../../infrastructure/import/readProgramFile';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -86,6 +87,20 @@ export function CreatorDashboard() {
     navigate('/programme');
   }
 
+  const fileInput = useRef<HTMLInputElement>(null);
+  async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const programme = await readProgramFile(file);
+      loadProgramme(programme);
+      navigate('/programme');
+    } catch {
+      setStatus("Échec de l'import du fichier.");
+    }
+  }
+
   async function onExport() {
     setBusy(true);
     setStatus(null);
@@ -146,6 +161,20 @@ export function CreatorDashboard() {
           tone="accent"
           disabled={!canCreateTrame(session)}
           onClick={newProgramme}
+        />
+        <ActionCard
+          title="Importer (PDF / MD)"
+          desc="Partir d'un programme existant : PDF ou Markdown, mappé automatiquement."
+          cta="Importer un fichier"
+          disabled={!canCreateProgramme(session)}
+          onClick={() => fileInput.current?.click()}
+        />
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain"
+          className="hidden"
+          onChange={onImportFile}
         />
         {canManageUsers(session) && (
           <ActionCard
