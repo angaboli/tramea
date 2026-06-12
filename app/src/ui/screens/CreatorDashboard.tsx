@@ -4,6 +4,8 @@ import { readProgramFile } from '../../infrastructure/import/readProgramFile';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
+import { NewTrameDialog } from '../components/NewTrameDialog';
+import { TechBadges } from '../components/TechBadges';
 import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
@@ -43,14 +45,11 @@ export function CreatorDashboard() {
   const loadProgramme = useProgrammeEditor((s) => s.load);
   const saved = useSavedProgrammes();
   const [status, setStatus] = useState<string | null>(null);
+  const [trameDialog, setTrameDialog] = useState(false);
 
   function newProgramme() {
     resetProgramme();
     navigate('/programme');
-  }
-  function newTrame() {
-    resetProgramme();
-    navigate('/trame');
   }
   function openProgramme(p: Programme) {
     loadProgramme(p);
@@ -73,6 +72,7 @@ export function CreatorDashboard() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-8">
+      {trameDialog && <NewTrameDialog onClose={() => setTrameDialog(false)} />}
       <div className="mb-8">
         <Badge tone="accent" className="mb-3">
           <span className="h-1.5 w-1.5 rounded-full bg-accent" /> CREATOR
@@ -99,7 +99,7 @@ export function CreatorDashboard() {
           cta="Créer une trame"
           tone="accent"
           disabled={!canCreateTrame(session)}
-          onClick={newTrame}
+          onClick={() => setTrameDialog(true)}
         />
         <ActionCard
           title="Importer (PDF / MD)"
@@ -156,6 +156,8 @@ export function CreatorDashboard() {
           </ul>
         )}
       </Card>
+
+      <TechBadges className="mt-8" />
     </main>
   );
 }
