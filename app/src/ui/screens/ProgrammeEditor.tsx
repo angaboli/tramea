@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -179,21 +179,23 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
   const library = useLibrary();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const dirInputRef = useRef<HTMLInputElement | null>(null);
   const missing = missingProFiles(programme).length;
   const isTrame = mode === 'trame';
 
   // L'éditeur de trame est réservé au rôle « avancé » (deny-by-default).
   if (isTrame && !canCreateTrame(session)) return <Navigate to="/programme" replace />;
 
-  // Sélecteur de dossier universel (<input webkitdirectory>) — marche dans Brave.
-  const dirInputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    const el = dirInputRef.current;
+  // Pose webkitdirectory/directory dès la création de l'input → sélecteur de
+  // DOSSIER (et non de fichier), de façon fiable y compris dans Brave.
+  const setDirInput = (el: HTMLInputElement | null) => {
+    dirInputRef.current = el;
     if (el) {
       el.setAttribute('webkitdirectory', '');
       el.setAttribute('directory', '');
+      el.setAttribute('mozdirectory', '');
     }
-  }, []);
+  };
   function onPickDir(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = '';
@@ -271,7 +273,7 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
           <Button variant="secondary" size="sm" onClick={() => dirInputRef.current?.click()}>
             {library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
           </Button>
-          <input ref={dirInputRef} type="file" multiple className="hidden" onChange={onPickDir} />
+          <input ref={setDirInput} type="file" multiple className="hidden" onChange={onPickDir} />
           {library.error && <span className="text-xs text-text-muted">{library.error}</span>}
         </div>
       )}
