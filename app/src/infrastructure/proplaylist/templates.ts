@@ -1,0 +1,20 @@
+// Gabarits binaires (base64) extraits d un export natif ProPresenter.
+// header de version, segment countdown (164o), couleurs de section.
+
+export const HEADER_F1_B64 = "CAISDwgKGP////8PIgUyNjIwMBgBIhEIFRADGAEiCTM1MjUxODQwMQ==";
+
+export const SEGMENT_TEMPLATE_B64 = "CiYKJDZkOTg0YzkxLTJjNTYtNDk4OS1iZTQ0LWI2ZTBmOTRmNmMwYRIcQ29tcHRlIMOgIHJlYm91cnMgZHUgc2VnbWVudDABSAPKAVcQAyJGCiYKJDAzNmUxZTFhLTczOTYtNDVmYi05MDBjLWQyNDU4Y2IyNzhmMBIcQ29tcHRlIMOgIHJlYm91cnMgZHUgc2VnbWVudFILCgkJAAAAAADAckA=";
+
+export const SECTION_COLORS_B64: Record<string, string> = {
+  "Ecole du sabbat": "Dauqqj4V19bWPh29vDw+JQAAgD8=",
+  "ANNONCES": "DYGAAD8lAACAPw==",
+  "INTERCESSION": "DYuKCj8VrawsPh3j4mI/JQAAgD8=",
+  "PRELUDE": "DdPSUj8V09LSPh3x8PA9JQAAgD8=",
+  "PRE-CULTE": "DdfW1j4Vj44OPx2NjAw+JQAAgD8=",
+  "TEMPS DE LOUANGES": "FYyLCz8djIsLPyUAAIA/",
+  "PRIERE A GENOUX": "Df38/D4V5+bmPh2BgAA+JQAAgD8=",
+  "MESSAGE DES ENFANTS": "DQAAgD8V09LSPh21tDQ/JQAAgD8=",
+  "MEDITATION": "DfHw8D0VkZAQPx0AAIA/JQAAgD8=",
+  "POST-CULTE": "DQAAgD8Vx8bGPh2Pjo4+JQAAgD8=",
+  "POSTLUDE": "DcnIyD0VycjIPR3h4OA+JQAAgD8=",
+};
