@@ -1,0 +1,54 @@
+/* Tramea — Design tokens (source: design/Tramea-Design-System.html)
+   Toutes les valeurs de marque vivent ici. Aucune couleur en dur ailleurs.
+   Thème sombre via [data-theme="dark"] sur <html>. */
+
+:root {
+  /* Échelle bleu */
+  --blue-50:#EEF3F9;--blue-100:#D8E3EF;--blue-200:#B0C6DD;--blue-300:#82A3C5;--blue-400:#5681AB;
+  --blue-500:#3A6494;--blue-600:#2F557F;--blue-700:#284769;--blue-800:#213853;--blue-900:#182838;
+  /* Échelle orange */
+  --orange-50:#FFF2EA;--orange-100:#FFE0CC;--orange-200:#FFC09A;--orange-300:#FF9D63;--orange-400:#FF842F;
+  --orange-500:#FF6C1A;--orange-600:#E85808;--orange-700:#BC4708;--orange-800:#94390C;--orange-900:#6E2C0B;
+  /* Neutres (bleutés) */
+  --n-0:#FFFFFF;--n-50:#F6F8FA;--n-100:#EFF1F5;--n-200:#E2E6EB;--n-300:#CBD2DA;--n-400:#9AA5B1;
+  --n-500:#6B7785;--n-600:#4E5965;--n-700:#3A434E;--n-800:#262C34;--n-900:#161A20;--n-950:#0E1116;
+
+  /* Sémantiques — thème clair */
+  --bg:#F6F8FA;--bg-subtle:#EEF1F5;--surface:#FFFFFF;--surface-2:#F7F9FB;--surface-hover:#F1F4F8;
+  --border:#E2E6EB;--border-strong:#CBD2DA;
+  --text:#1A2129;--text-secondary:#56616E;--text-muted:#8A95A1;--text-inverse:#FFFFFF;
+  --primary:#2F557F;--primary-hover:#284769;--primary-active:#213853;--primary-soft:#EAF1F8;--primary-soft-text:#2F557F;
+  --accent:#FF6C1A;--accent-hover:#E85808;--accent-active:#BC4708;--accent-soft:#FFF1E8;--accent-soft-text:#BC4708;
+  --success:#1F8A5B;--success-soft:#E6F4EC;--warning:#C9881A;--warning-soft:#FBF1DC;
+  --error:#D64545;--error-soft:#FBE9E9;--info:#2F557F;--info-soft:#EAF1F8;
+
+  /* Rayons */
+  --r-xs:4px;--r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--r-2xl:28px;--r-full:999px;
+  /* Élévation */
+  --shadow-sm:0 1px 2px rgba(22,33,48,.06),0 1px 3px rgba(22,33,48,.05);
+  --shadow-md:0 4px 12px rgba(22,33,48,.08);
+  --shadow-lg:0 12px 32px rgba(22,33,48,.12);
+  --shadow-xl:0 24px 60px rgba(22,33,48,.16);
+  --focus:0 0 0 3px rgba(47,85,127,.28);
+
+  /* Espacement (base 4px) */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--sp-10:40px;
+}
+
+[data-theme="dark"] {
+  --bg:#0E1116;--bg-subtle:#11151B;--surface:#171C23;--surface-2:#1D232B;--surface-hover:#232A33;
+  --border:#2A323C;--border-strong:#3A434E;
+  --text:#EAEEF3;--text-secondary:#A9B4C0;--text-muted:#6E7A87;--text-inverse:#0E1116;
+  --primary:#4A77A6;--primary-hover:#5E8AB8;--primary-active:#3A6494;--primary-soft:#1A2A3A;--primary-soft-text:#9CC0E4;
+  --accent:#FF7A2E;--accent-hover:#FF8A45;--accent-active:#FF6C1A;--accent-soft:#2A1A10;--accent-soft-text:#FFA76B;
+  --success:#34A56F;--success-soft:#13251C;--warning:#D69B2E;--warning-soft:#2A2110;
+  --error:#E26464;--error-soft:#2A1517;--info:#5E8AB8;--info-soft:#1A2A3A;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 4px 14px rgba(0,0,0,.45);
+  --shadow-lg:0 14px 36px rgba(0,0,0,.55);
+  --shadow-xl:0 26px 64px rgba(0,0,0,.6);
+  --focus:0 0 0 3px rgba(94,138,184,.4);
+}
+
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}

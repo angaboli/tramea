@@ -1,0 +1,18 @@
+@import './styles/tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.45;
+  }
+  ::selection { background: rgba(255, 108, 26, 0.22); }
+  :focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--r-sm); }
+}
