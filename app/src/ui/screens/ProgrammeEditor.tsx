@@ -155,6 +155,22 @@ export function ProgrammeEditor() {
   const [status, setStatus] = useState<string | null>(null);
   const missing = missingProFiles(programme).length;
 
+  function safeName(): string {
+    return (programme.titre || 'programme').replace(/[\\/:*?"<>|]/g, '-');
+  }
+
+  async function onPdf() {
+    setStatus(null);
+    try {
+      // pdf-lib est lourd : chargé à la demande (code-splitting).
+      const { buildProgrammePdf } = await import('../../infrastructure/pdf/buildProgrammePdf');
+      const bytes = await buildProgrammePdf(programme);
+      downloadBytes(bytes, `${safeName()} - ${programme.date}.pdf`);
+    } catch {
+      setStatus('Erreur lors de la génération du PDF.');
+    }
+  }
+
   async function onExport() {
     setBusy(true);
     setStatus(null);
@@ -172,8 +188,7 @@ export function ProgrammeEditor() {
         { playlistName: `sabbat ${programme.date}`, items: programmeToExportItems(programme) },
         fs,
       );
-      const name = (programme.titre || 'trame').replace(/[\\/:*?"<>|]/g, '-');
-      downloadBytes(result.zip, `${name} - ${programme.date}.proPlaylist`);
+      downloadBytes(result.zip, `${safeName()} - ${programme.date}.proPlaylist`);
       setStatus(`Export OK : ${result.proCount} chant(s), ${result.mediaCount} média(s)`);
     } catch (e) {
       setStatus(e instanceof Error ? `Annulé : ${e.message}` : 'Erreur inattendue');
@@ -239,14 +254,24 @@ export function ProgrammeEditor() {
       </div>
 
       <div className="sticky bottom-0 mt-8 border-t border-border bg-bg/85 py-4 backdrop-blur">
-        <Button
-          variant="accent"
-          full
-          disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
-          onClick={onExport}
-        >
-          {busy ? 'Export…' : 'Exporter en .proPlaylist'}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="secondary"
+            full
+            disabled={programme.sections.length === 0}
+            onClick={onPdf}
+          >
+            Télécharger le PDF
+          </Button>
+          <Button
+            variant="accent"
+            full
+            disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
+            onClick={onExport}
+          >
+            {busy ? 'Export…' : 'Exporter en .proPlaylist'}
+          </Button>
+        </div>
         {!canCreateTrame(session) && (
           <p className="mt-2 text-center text-xs text-text-muted">Rôle « avancé » requis pour exporter une trame.</p>
         )}
