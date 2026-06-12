@@ -5,7 +5,10 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
+import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { useLibrary, supportsFolder } from '../stores/library';
+import { countSongs as countSongsOf } from '../../domain/trame/programme';
+import type { Programme as ProgrammeType } from '../../domain/trame/types';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 import { countSongs } from '../../domain/trame/programme';
 import type { Programme } from '../../domain/trame/types';
@@ -66,13 +69,20 @@ export function CreatorDashboard() {
   const { session } = useSession();
   const navigate = useNavigate();
   const resetProgramme = useProgrammeEditor((s) => s.reset);
+  const loadProgramme = useProgrammeEditor((s) => s.load);
   const library = useLibrary();
+  const saved = useSavedProgrammes();
   const fsSupported = supportsFolder;
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   function newProgramme() {
     resetProgramme();
+    navigate('/programme');
+  }
+
+  function openProgramme(p: ProgrammeType) {
+    loadProgramme(p);
     navigate('/programme');
   }
 
@@ -146,6 +156,40 @@ export function CreatorDashboard() {
           />
         )}
       </div>
+
+      {/* Mes programmes (sauvegardés localement) */}
+      <Card className="mb-8">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-bold">Mes programmes</h2>
+          <Badge tone="neutral">{saved.items.length}</Badge>
+        </div>
+        {saved.items.length === 0 ? (
+          <p className="py-4 text-center text-sm text-text-muted">
+            Aucun programme enregistré. Créez-en un — il sera sauvegardé automatiquement.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {saved.items.map((rec) => (
+              <li key={rec.programme.id} className="flex items-center gap-3 py-2.5">
+                <button
+                  onClick={() => openProgramme(rec.programme)}
+                  className="flex-1 truncate text-left hover:text-primary focus-visible:outline-none"
+                >
+                  <span className="font-semibold">
+                    {rec.programme.titre || 'Sans titre'}
+                  </span>
+                  <span className="ml-2 text-sm text-text-muted">
+                    {rec.programme.date} · {countSongsOf(rec.programme)} chant(s)
+                  </span>
+                </button>
+                <Button variant="ghost" size="sm" onClick={() => saved.remove(rec.programme.id)}>
+                  Supprimer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       {/* Aperçu programme + export (démo) */}
       <div className="grid gap-4 sm:grid-cols-2">
