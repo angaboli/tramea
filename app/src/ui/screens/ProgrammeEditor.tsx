@@ -185,6 +185,13 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
   // L'éditeur de trame est réservé au rôle « avancé » (deny-by-default).
   if (isTrame && !canCreateTrame(session)) return <Navigate to="/programme" replace />;
 
+  // Raison éventuelle pour laquelle l'export .proPlaylist est bloqué.
+  const exportBlock: string | null = !supportsFolder
+    ? 'Export possible sur Chrome / Edge (accès au dossier ProPresenter).'
+    : countSongs(programme) === 0
+      ? 'Ajoutez au moins un chant à la trame.'
+      : null;
+
   function safeName(): string {
     return (programme.titre || 'programme').replace(/[\\/:*?"<>|]/g, '-');
   }
@@ -291,16 +298,13 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
             <Button
               variant="accent"
               full
-              disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
+              disabled={busy || exportBlock !== null}
               onClick={onExport}
             >
               {busy ? 'Export…' : 'Exporter en .proPlaylist'}
             </Button>
-            {!canCreateTrame(session) && (
-              <p className="mt-2 text-center text-xs text-text-muted">Rôle « avancé » requis pour exporter une trame.</p>
-            )}
-            {!supportsFolder && (
-              <p className="mt-2 text-center text-xs text-text-muted">Export disponible sur Chrome / Edge (File System Access).</p>
+            {exportBlock && (
+              <p className="mt-2 text-center text-xs text-warning">{exportBlock}</p>
             )}
           </>
         ) : (
