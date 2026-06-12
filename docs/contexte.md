@@ -1,11 +1,6 @@
 # Prompt de contexte — Tramea
 
-> À coller en début de conversation avec un assistant IA (ou à donner à un nouveau
-> développeur) pour qu'il comprenne le projet avant d'aider.
-
----
-
-## 🟢 Le contexte simple (qu'un enfant comprendrait)
+## 🟢 Le contexte général
 
 Imagine une église. Chaque samedi (le sabbat), il y a un programme : on chante des
 chansons, quelqu'un souhaite la bienvenue, quelqu'un prie, quelqu'un raconte une
@@ -22,6 +17,7 @@ et on fait des erreurs.
 **Tramea**, c'est une application qui rend ça facile. On choisit les chansons et les
 moments du programme dans l'application, comme on remplit une liste, et l'application
 fabrique **toute seule** deux choses :
+
 1. une **feuille papier** (le programme à imprimer) ;
 2. un **fichier prêt à ouvrir dans ProPresenter** (pour l'afficher sur l'écran).
 
@@ -42,6 +38,7 @@ ce qui rend tout fiable : on pointe le bon fichier de chant exactement, sans dev
 le « deviner ».
 
 **Deux exports, depuis le même JSON :**
+
 - **PDF** — la feuille de culte (mise en page actuelle : colonnes titre, recueil,
   tonalité, officiant, note).
 - **`.proPlaylist`** — une archive importable directement dans **ProPresenter 7**.
@@ -72,5 +69,6 @@ scaffold de la PWA + portage de l'encodeur `.proPlaylist` en TypeScript, validé
 octet-pour-octet contre le fichier de référence.
 
 **Documents du projet :**
+
 - `docs/plan.md` — plan détaillé (architecture, modèle de données, sprints, versions).
 - `README.md` — présentation courte.
