@@ -14,3 +14,11 @@ export interface Session {
   /** Attribué par un admin à l'approbation ; absent tant que `pending`. */
   role: Role | null;
 }
+
+/** Compte utilisateur, tel que vu par un administrateur. */
+export interface UserAccount {
+  id: string;
+  email: string;
+  role: Role | null;
+  status: AccountStatus;
+}

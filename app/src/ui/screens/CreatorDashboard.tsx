@@ -152,7 +152,7 @@ export function CreatorDashboard() {
             title="Utilisateurs"
             desc="Approuver les nouveaux comptes et attribuer les rôles."
             cta="Gérer les utilisateurs"
-            disabled
+            onClick={() => navigate('/admin')}
           />
         )}
       </div>

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './ui/Layout';
 import { CreatorDashboard } from './ui/screens/CreatorDashboard';
 import { ProgrammeEditor } from './ui/screens/ProgrammeEditor';
+import { AdminPanel } from './ui/screens/AdminPanel';
 import { setupAutosave } from './ui/lib/autosave';
 import { useSavedProgrammes } from './ui/stores/savedProgrammes';
 
@@ -22,6 +23,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/creator" element={<CreatorDashboard />} />
           <Route path="/programme" element={<ProgrammeEditor />} />
+          <Route path="/admin" element={<AdminPanel />} />
           {/* Tout le reste mène au tableau de bord Creator. */}
           <Route path="*" element={<Navigate to="/creator" replace />} />
         </Route>
