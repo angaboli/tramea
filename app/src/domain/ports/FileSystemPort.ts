@@ -17,9 +17,18 @@ export interface ProResource {
   bytes: Uint8Array;
 }
 
+export interface PresentationRef {
+  /** Nom de fichier .pro (basename). */
+  name: string;
+  /** Chemin relatif au dossier ProPresenter. */
+  relPath: string;
+}
+
 export interface FileSystemPort {
   /** Un dossier ProPresenter est-il actuellement disponible ? */
   isAvailable(): boolean;
+  /** Index des présentations `.pro` disponibles (pour la recherche). */
+  listPresentations(): PresentationRef[];
   /** Résout un `.pro` par nom de fichier (basename). null si absent. */
   resolvePresentation(fileName: string): Promise<ProResource | null>;
   /** Lit un média par nom de base. null si absent. */

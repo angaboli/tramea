@@ -17,6 +17,8 @@ function fakeFs(
 ): FileSystemPort {
   return {
     isAvailable: () => available,
+    listPresentations: () =>
+      Object.entries(pros).map(([name, r]) => ({ name, relPath: r.relPath })),
     resolvePresentation: async (name) => pros[name] ?? null,
     resolveMedia: async (base) => media[base] ?? null,
   };

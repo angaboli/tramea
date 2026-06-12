@@ -5,10 +5,10 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
+import { useLibrary, supportsFolder } from '../stores/library';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 import { countSongs } from '../../domain/trame/programme';
 import type { Programme } from '../../domain/trame/types';
-import { FileSystemAccessAdapter } from '../../infrastructure/fs/fileSystemAccessAdapter';
 import { exportProplaylist } from '../../application/usecases/exportProplaylist';
 import { programmeToExportItems } from '../../application/usecases/programmeToExportItems';
 import { downloadBytes } from '../lib/download';
@@ -66,7 +66,8 @@ export function CreatorDashboard() {
   const { session } = useSession();
   const navigate = useNavigate();
   const resetProgramme = useProgrammeEditor((s) => s.reset);
-  const fsSupported = FileSystemAccessAdapter.isSupported();
+  const library = useLibrary();
+  const fsSupported = supportsFolder;
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -79,8 +80,15 @@ export function CreatorDashboard() {
     setBusy(true);
     setStatus(null);
     try {
-      const fs = new FileSystemAccessAdapter();
-      await fs.pickDirectory();
+      let fs = library.adapter;
+      if (!fs) {
+        await library.connect();
+        fs = useLibrary.getState().adapter;
+      }
+      if (!fs) {
+        setStatus('Dossier ProPresenter non connecté.');
+        return;
+      }
       const result = await exportProplaylist(
         { playlistName: `sabbat ${demo.date}`, items: programmeToExportItems(demo) },
         fs,

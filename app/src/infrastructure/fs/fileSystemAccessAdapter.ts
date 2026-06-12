@@ -6,7 +6,11 @@
  * Non testé unitairement (API navigateur) ; la logique métier est couverte via
  * l'adapter mémoire dans les tests du cas d'usage.
  */
-import type { FileSystemPort, ProResource } from '../../domain/ports/FileSystemPort';
+import type {
+  FileSystemPort,
+  ProResource,
+  PresentationRef,
+} from '../../domain/ports/FileSystemPort';
 
 // Déclarations minimales (selon le support TS DOM).
 type DirHandle = FileSystemDirectoryHandle & {
@@ -30,6 +34,13 @@ export class FileSystemAccessAdapter implements FileSystemPort {
 
   isAvailable(): boolean {
     return this.root !== null;
+  }
+
+  listPresentations(): PresentationRef[] {
+    return [...this.presentations.entries()].map(([name, v]) => ({
+      name,
+      relPath: v.relPath,
+    }));
   }
 
   /** Ouvre le sélecteur de dossier et construit les index. */

@@ -5,10 +5,11 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSession } from '../stores/session';
+import { useLibrary, supportsFolder } from '../stores/library';
+import { SongPicker } from '../components/SongPicker';
 import { canCreateTrame } from '../../domain/auth/access';
 import { countSongs, missingProFiles } from '../../domain/trame/programme';
 import type { Section, TrameItem } from '../../domain/trame/types';
-import { FileSystemAccessAdapter } from '../../infrastructure/fs/fileSystemAccessAdapter';
 import { exportProplaylist } from '../../application/usecases/exportProplaylist';
 import { programmeToExportItems } from '../../application/usecases/programmeToExportItems';
 import { downloadBytes } from '../lib/download';
@@ -63,9 +64,19 @@ function ItemRow({
   count: number;
 }) {
   const { updateItem, removeItem, moveItem } = useProgrammeEditor();
+  const libraryReady = useLibrary((s) => s.ready);
+  const [picking, setPicking] = useState(false);
   const isSong = item.type === 'song';
   return (
     <div className="rounded-md border border-border bg-surface-2 p-2.5">
+      {picking && (
+        <SongPicker
+          onClose={() => setPicking(false)}
+          onPick={(c) =>
+            updateItem(sectionId, item.id, { titre: c.titre, ref: c.ref, proFile: c.proFile })
+          }
+        />
+      )}
       <div className="flex items-center gap-2">
         <button
           aria-label={isSong ? 'Basculer en libellé' : 'Basculer en chant'}
@@ -82,6 +93,9 @@ function ItemRow({
           onChange={(e) => updateItem(sectionId, item.id, { titre: e.target.value })}
         />
         <div className="flex shrink-0 gap-1">
+          {isSong && libraryReady && (
+            <IconBtn label="Choisir dans la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
+          )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre" onClick={() => moveItem(sectionId, index, index + 1)} disabled={index === count - 1}>↓</IconBtn>
           <IconBtn label="Supprimer" onClick={() => removeItem(sectionId, item.id)}>✕</IconBtn>
@@ -136,17 +150,24 @@ function SectionCard({ section, index, count }: { section: Section; index: numbe
 export function ProgrammeEditor() {
   const { programme, setMeta, addSection } = useProgrammeEditor();
   const { session } = useSession();
+  const library = useLibrary();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const fsSupported = FileSystemAccessAdapter.isSupported();
   const missing = missingProFiles(programme).length;
 
   async function onExport() {
     setBusy(true);
     setStatus(null);
     try {
-      const fs = new FileSystemAccessAdapter();
-      await fs.pickDirectory();
+      let fs = library.adapter;
+      if (!fs) {
+        await library.connect();
+        fs = useLibrary.getState().adapter;
+      }
+      if (!fs) {
+        setStatus('Dossier ProPresenter non connecté.');
+        return;
+      }
       const result = await exportProplaylist(
         { playlistName: `sabbat ${programme.date}`, items: programmeToExportItems(programme) },
         fs,
@@ -167,10 +188,26 @@ export function ProgrammeEditor() {
         ← Tableau de bord
       </Link>
       <h1 className="mb-1 text-2xl font-extrabold tracking-tight">Éditeur de programme</h1>
-      <p className="mb-6 text-sm text-text-secondary">
+      <p className="mb-4 text-sm text-text-secondary">
         {programme.sections.length} section(s) · {countSongs(programme)} chant(s)
         {missing > 0 && <> · <span className="text-warning">{missing} sans .pro</span></>}
       </p>
+
+      {supportsFolder && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3">
+          {library.ready ? (
+            <Badge tone="success">Bibliothèque connectée · {library.songs.length} chants</Badge>
+          ) : (
+            <span className="text-sm text-text-secondary">
+              Connectez votre dossier ProPresenter pour choisir les chants.
+            </span>
+          )}
+          <Button variant="secondary" size="sm" disabled={library.busy} onClick={() => library.connect()}>
+            {library.busy ? 'Connexion…' : library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
+          </Button>
+          {library.error && <span className="text-xs text-text-muted">{library.error}</span>}
+        </div>
+      )}
 
       <Card className="mb-5">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -205,7 +242,7 @@ export function ProgrammeEditor() {
         <Button
           variant="accent"
           full
-          disabled={busy || !fsSupported || !canCreateTrame(session) || countSongs(programme) === 0}
+          disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
           onClick={onExport}
         >
           {busy ? 'Export…' : 'Exporter en .proPlaylist'}
