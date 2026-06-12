@@ -6,6 +6,7 @@ import { ProgrammeEditor } from './ui/screens/ProgrammeEditor';
 import { AdminPanel } from './ui/screens/AdminPanel';
 import { setupAutosave } from './ui/lib/autosave';
 import { useSavedProgrammes } from './ui/stores/savedProgrammes';
+import { useLibrary } from './ui/stores/library';
 
 /**
  * Routeur de l'application (rendu uniquement pour une session valide,
@@ -14,6 +15,8 @@ import { useSavedProgrammes } from './ui/stores/savedProgrammes';
 export default function App() {
   useEffect(() => {
     void useSavedProgrammes.getState().refresh();
+    // Réutilise silencieusement le dossier ProPresenter déjà autorisé.
+    void useLibrary.getState().restore();
     return setupAutosave();
   }, []);
 

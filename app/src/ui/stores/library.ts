@@ -11,20 +11,20 @@ interface LibraryState {
   ready: boolean;
   busy: boolean;
   error: string | null;
-  /** Sélection de dossier via File System Access API (Chrome/Edge). */
+  /** Réutilise silencieusement le dossier mémorisé si l'accès est déjà accordé. */
+  restore: () => Promise<void>;
+  /** Connexion par geste : réutilise le dossier mémorisé (ré-autorisation) ou ouvre le sélecteur. */
   connect: () => Promise<void>;
-  /** Indexation depuis des fichiers (<input webkitdirectory>) — universel. */
+  /** Indexation depuis des fichiers (<input webkitdirectory>) — Brave / Firefox. */
   connectFiles: (files: File[]) => void;
 }
 
-// Sélection de dossier disponible partout via <input webkitdirectory>
-// (Brave/Chrome/Edge/Firefox), au-delà de la File System Access API.
+// Sélection de dossier disponible partout via <input webkitdirectory>.
 export const supportsFolder = true;
+// File System Access API (Chrome/Edge) : permet de MÉMORISER le dossier.
+export const supportsPersistentFolder = FileSystemAccessAdapter.isSupported();
 
-function indexAndSet(
-  set: (p: Partial<LibraryState>) => void,
-  adapter: FileSystemPort,
-) {
+function indexAndSet(set: (p: Partial<LibraryState>) => void, adapter: FileSystemPort) {
   const songs: LibrarySong[] = adapter
     .listPresentations()
     .map((p) => ({ name: p.name, relPath: p.relPath }));
@@ -37,12 +37,22 @@ function indexAndSet(
   });
 }
 
-export const useLibrary = create<LibraryState>((set) => ({
+export const useLibrary = create<LibraryState>((set, getState) => ({
   adapter: null,
   songs: [],
   ready: false,
   busy: false,
   error: null,
+
+  async restore() {
+    if (getState().ready) return;
+    try {
+      const adapter = await FileSystemAccessAdapter.restoreSilent();
+      if (adapter) indexAndSet(set, adapter);
+    } catch {
+      /* silencieux : on demandera la connexion au besoin */
+    }
+  },
 
   async connect() {
     if (!FileSystemAccessAdapter.isSupported()) {
@@ -51,9 +61,7 @@ export const useLibrary = create<LibraryState>((set) => ({
     }
     set({ busy: true, error: null });
     try {
-      const adapter = new FileSystemAccessAdapter();
-      await adapter.pickDirectory();
-      indexAndSet(set, adapter);
+      indexAndSet(set, await FileSystemAccessAdapter.connect());
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : 'Sélection annulée' });
     }

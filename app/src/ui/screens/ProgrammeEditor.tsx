@@ -5,7 +5,7 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSession } from '../stores/session';
-import { useLibrary, supportsFolder } from '../stores/library';
+import { useLibrary, supportsFolder, supportsPersistentFolder } from '../stores/library';
 import { SongPicker } from '../components/SongPicker';
 import { canCreateTrame } from '../../domain/auth/access';
 import { countSongs, missingProFiles } from '../../domain/trame/programme';
@@ -270,10 +270,18 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
               Connectez votre dossier ProPresenter pour choisir les chants.
             </span>
           )}
-          <Button variant="secondary" size="sm" onClick={() => dirInputRef.current?.click()}>
-            {library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={library.busy}
+            onClick={() => (supportsPersistentFolder ? library.connect() : dirInputRef.current?.click())}
+          >
+            {library.busy ? 'Connexion…' : library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
           </Button>
           <input ref={setDirInput} type="file" multiple className="hidden" onChange={onPickDir} />
+          {supportsPersistentFolder && !library.ready && (
+            <span className="text-xs text-text-muted">Le dossier est mémorisé pour les prochaines fois.</span>
+          )}
           {library.error && <span className="text-xs text-text-muted">{library.error}</span>}
         </div>
       )}
