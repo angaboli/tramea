@@ -5,7 +5,6 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { NewTrameDialog } from '../components/NewTrameDialog';
-import { TechBadges } from '../components/TechBadges';
 import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
@@ -166,8 +165,6 @@ export function CreatorDashboard() {
           </ul>
         )}
       </Card>
-
-      <TechBadges className="mt-8" />
     </main>
   );
 }

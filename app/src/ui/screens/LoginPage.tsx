@@ -3,7 +3,6 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { TechBadges } from '../components/TechBadges';
 import { useSession } from '../stores/session';
 import { isRealAuth } from '../../infrastructure/auth/authPort';
 
@@ -108,7 +107,6 @@ export function LoginPage() {
           <p className="mt-5 text-center text-xs text-text-muted">
             Aucun compte n'est créé sans l'autorisation d'un administrateur.
           </p>
-          <TechBadges className="mt-6 justify-center" />
         </div>
       </main>
     </div>
