@@ -9,6 +9,7 @@ import { useLibrary, supportsFolder } from '../stores/library';
 import { SongPicker } from '../components/SongPicker';
 import { canCreateTrame } from '../../domain/auth/access';
 import { countSongs, missingProFiles } from '../../domain/trame/programme';
+import { RECURRING_LABELS } from '../../domain/trame/recurring';
 import type { Section, TrameItem } from '../../domain/trame/types';
 import { exportProplaylist } from '../../application/usecases/exportProplaylist';
 import { programmeToExportItems } from '../../application/usecases/programmeToExportItems';
@@ -139,10 +140,27 @@ function SectionCard({ section, index, count }: { section: Section; index: numbe
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" onClick={() => addItem(section.id, 'song', '')}>+ Chant</Button>
         <Button variant="ghost" size="sm" onClick={() => addItem(section.id, 'label', '')}>+ Texte</Button>
       </div>
+
+      <details className="rounded-md border border-border bg-surface-2 px-3 py-2">
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-text-muted">
+          Moments courants
+        </summary>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {RECURRING_LABELS.map((label) => (
+            <button
+              key={label}
+              onClick={() => addItem(section.id, 'label', label)}
+              className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-hover hover:text-text focus-visible:shadow-focus focus-visible:outline-none"
+            >
+              + {label}
+            </button>
+          ))}
+        </div>
+      </details>
     </Card>
   );
 }
