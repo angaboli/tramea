@@ -179,6 +179,12 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
   const library = useLibrary();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [exportResult, setExportResult] = useState<{
+    proCount: number;
+    mediaCount: number;
+    missingPresentations: string[];
+    missingMedia: string[];
+  } | null>(null);
   const dirInputRef = useRef<HTMLInputElement | null>(null);
   const missing = missingProFiles(programme).length;
   const isTrame = mode === 'trame';
@@ -229,6 +235,7 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
   async function onExport() {
     setBusy(true);
     setStatus(null);
+    setExportResult(null);
     try {
       const fs = library.adapter;
       if (!fs) {
@@ -240,7 +247,12 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
         fs,
       );
       downloadBytes(result.zip, `${safeName()} - ${programme.date}.proPlaylist`);
-      setStatus(`Export OK : ${result.proCount} chant(s), ${result.mediaCount} média(s)`);
+      setExportResult({
+        proCount: result.proCount,
+        mediaCount: result.mediaCount,
+        missingPresentations: result.missingPresentations,
+        missingMedia: result.missingMedia,
+      });
     } catch (e) {
       setStatus(e instanceof Error ? `Annulé : ${e.message}` : 'Erreur inattendue');
     } finally {
@@ -328,6 +340,31 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
             </Button>
             {exportBlock && (
               <p className="mt-2 text-center text-xs text-warning">{exportBlock}</p>
+            )}
+            {exportResult && (
+              <div className="mt-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
+                <p className="font-semibold text-success">
+                  ✓ Export réussi — {exportResult.proCount} chant(s) lié(s),{' '}
+                  {exportResult.mediaCount} média(s) inclus.
+                </p>
+                {exportResult.missingPresentations.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-semibold text-warning">
+                      À ajouter à la main dans ProPresenter (chant introuvable) :
+                    </p>
+                    <ul className="mt-1 list-disc pl-5 text-xs text-text-secondary">
+                      {exportResult.missingPresentations.map((m) => (
+                        <li key={m}>{m}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {exportResult.missingMedia.length > 0 && (
+                  <p className="mt-2 text-xs text-text-muted">
+                    {exportResult.missingMedia.length} média(s) introuvable(s) (fond à remettre dans ProPresenter).
+                  </p>
+                )}
+              </div>
             )}
           </>
         ) : (
