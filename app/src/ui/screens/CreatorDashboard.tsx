@@ -10,6 +10,7 @@ import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { countSongs } from '../../domain/trame/programme';
+import { duplicateProgramme } from '../../domain/trame/duplicate';
 import type { Programme } from '../../domain/trame/types';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 
@@ -53,6 +54,12 @@ export function CreatorDashboard() {
   }
   function openProgramme(p: Programme) {
     loadProgramme(p);
+    navigate('/programme');
+  }
+
+  function duplicate(p: Programme) {
+    const today = new Date().toISOString().slice(0, 10);
+    loadProgramme(duplicateProgramme(p, today));
     navigate('/programme');
   }
 
@@ -148,6 +155,9 @@ export function CreatorDashboard() {
                     {rec.programme.date} · {countSongs(rec.programme)} chant(s)
                   </span>
                 </button>
+                <Button variant="secondary" size="sm" onClick={() => duplicate(rec.programme)}>
+                  Dupliquer
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => saved.remove(rec.programme.id)}>
                   Supprimer
                 </Button>
