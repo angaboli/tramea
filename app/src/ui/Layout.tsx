@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { Badge } from './components/Badge';
 import { Button } from './components/Button';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -12,7 +12,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 function Logo() {
   return (
-    <div className="flex items-center gap-3">
+    <Link to="/creator" className="flex items-center gap-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <line x1="3.5" y1="5" x2="14.5" y2="5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
@@ -24,7 +24,7 @@ function Logo() {
         <div className="text-base font-bold">Tramea</div>
         <div className="text-xs text-text-muted">Trames de culte</div>
       </div>
-    </div>
+    </Link>
   );
 }
 

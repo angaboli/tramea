@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { useSession } from '../stores/session';
+import { useProgrammeEditor } from '../stores/programmeEditor';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 import { countSongs } from '../../domain/trame/programme';
 import type { Programme } from '../../domain/trame/types';
@@ -62,9 +64,16 @@ function ActionCard({ title, desc, cta, tone = 'primary', disabled, onClick }: A
 
 export function CreatorDashboard() {
   const { session } = useSession();
+  const navigate = useNavigate();
+  const resetProgramme = useProgrammeEditor((s) => s.reset);
   const fsSupported = FileSystemAccessAdapter.isSupported();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+
+  function newProgramme() {
+    resetProgramme();
+    navigate('/programme');
+  }
 
   async function onExport() {
     setBusy(true);
@@ -110,6 +119,7 @@ export function CreatorDashboard() {
           desc="Composer l'ordre du culte : sections, chants, moments liturgiques."
           cta="Créer un programme"
           disabled={!canCreateProgramme(session)}
+          onClick={newProgramme}
         />
         <ActionCard
           title="Nouvelle trame"
@@ -117,6 +127,7 @@ export function CreatorDashboard() {
           cta="Créer une trame"
           tone="accent"
           disabled={!canCreateTrame(session)}
+          onClick={newProgramme}
         />
         {canManageUsers(session) && (
           <ActionCard
