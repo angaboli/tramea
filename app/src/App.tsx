@@ -22,7 +22,8 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/creator" element={<CreatorDashboard />} />
-          <Route path="/programme" element={<ProgrammeEditor />} />
+          <Route path="/programme" element={<ProgrammeEditor mode="programme" />} />
+          <Route path="/trame" element={<ProgrammeEditor mode="trame" />} />
           <Route path="/admin" element={<AdminPanel />} />
           {/* Tout le reste mène au tableau de bord Creator. */}
           <Route path="*" element={<Navigate to="/creator" replace />} />

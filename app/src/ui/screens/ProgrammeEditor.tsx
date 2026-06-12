@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -102,12 +102,20 @@ function ItemRow({
           <IconBtn label="Supprimer" onClick={() => removeItem(sectionId, item.id)}>✕</IconBtn>
         </div>
       </div>
-      {isSong && (
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <input className={field} placeholder="Réf (H&L 508)" value={item.ref ?? ''} onChange={(e) => updateItem(sectionId, item.id, { ref: e.target.value })} />
-          <input className={field} placeholder="Tonalité" value={item.tonalite ?? ''} onChange={(e) => updateItem(sectionId, item.id, { tonalite: e.target.value })} />
+      {isSong ? (
+        <div className="mt-2 flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <input className={field} placeholder="Réf (H&L 508)" value={item.ref ?? ''} onChange={(e) => updateItem(sectionId, item.id, { ref: e.target.value })} />
+            <input className={field} placeholder="Tonalité" value={item.tonalite ?? ''} onChange={(e) => updateItem(sectionId, item.id, { tonalite: e.target.value })} />
+            <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
+            <input className={field} placeholder="Note" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+          </div>
+          <input className={field} placeholder="Fichier .pro (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+        </div>
+      ) : (
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
-          <input className={field} placeholder="Fichier .pro" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+          <input className={field} placeholder="Note" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
         </div>
       )}
     </div>
@@ -165,13 +173,17 @@ function SectionCard({ section, index, count }: { section: Section; index: numbe
   );
 }
 
-export function ProgrammeEditor() {
+export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | 'trame' }) {
   const { programme, setMeta, addSection } = useProgrammeEditor();
   const { session } = useSession();
   const library = useLibrary();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const missing = missingProFiles(programme).length;
+  const isTrame = mode === 'trame';
+
+  // L'éditeur de trame est réservé au rôle « avancé » (deny-by-default).
+  if (isTrame && !canCreateTrame(session)) return <Navigate to="/programme" replace />;
 
   function safeName(): string {
     return (programme.titre || 'programme').replace(/[\\/:*?"<>|]/g, '-');
@@ -220,13 +232,15 @@ export function ProgrammeEditor() {
       <Link to="/creator" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-text">
         ← Tableau de bord
       </Link>
-      <h1 className="mb-1 text-2xl font-extrabold tracking-tight">Éditeur de programme</h1>
+      <h1 className="mb-1 text-2xl font-extrabold tracking-tight">
+        {isTrame ? 'Éditeur de trame' : 'Éditeur de programme'}
+      </h1>
       <p className="mb-4 text-sm text-text-secondary">
         {programme.sections.length} section(s) · {countSongs(programme)} chant(s)
         {missing > 0 && <> · <span className="text-warning">{missing} sans .pro</span></>}
       </p>
 
-      {supportsFolder && (
+      {isTrame && supportsFolder && (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3">
           {library.ready ? (
             <Badge tone="success">Bibliothèque connectée · {library.songs.length} chants</Badge>
@@ -272,7 +286,24 @@ export function ProgrammeEditor() {
       </div>
 
       <div className="sticky bottom-0 mt-8 border-t border-border bg-bg/85 py-4 backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row">
+        {isTrame ? (
+          <>
+            <Button
+              variant="accent"
+              full
+              disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
+              onClick={onExport}
+            >
+              {busy ? 'Export…' : 'Exporter en .proPlaylist'}
+            </Button>
+            {!canCreateTrame(session) && (
+              <p className="mt-2 text-center text-xs text-text-muted">Rôle « avancé » requis pour exporter une trame.</p>
+            )}
+            {!supportsFolder && (
+              <p className="mt-2 text-center text-xs text-text-muted">Export disponible sur Chrome / Edge (File System Access).</p>
+            )}
+          </>
+        ) : (
           <Button
             variant="secondary"
             full
@@ -281,17 +312,6 @@ export function ProgrammeEditor() {
           >
             Télécharger le PDF
           </Button>
-          <Button
-            variant="accent"
-            full
-            disabled={busy || !supportsFolder || !canCreateTrame(session) || countSongs(programme) === 0}
-            onClick={onExport}
-          >
-            {busy ? 'Export…' : 'Exporter en .proPlaylist'}
-          </Button>
-        </div>
-        {!canCreateTrame(session) && (
-          <p className="mt-2 text-center text-xs text-text-muted">Rôle « avancé » requis pour exporter une trame.</p>
         )}
         {status && <p className="mt-2 text-center text-xs font-semibold text-text-secondary">{status}</p>}
       </div>
