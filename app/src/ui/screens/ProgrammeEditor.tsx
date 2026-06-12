@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -185,12 +185,28 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
   // L'éditeur de trame est réservé au rôle « avancé » (deny-by-default).
   if (isTrame && !canCreateTrame(session)) return <Navigate to="/programme" replace />;
 
+  // Sélecteur de dossier universel (<input webkitdirectory>) — marche dans Brave.
+  const dirInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const el = dirInputRef.current;
+    if (el) {
+      el.setAttribute('webkitdirectory', '');
+      el.setAttribute('directory', '');
+    }
+  }, []);
+  function onPickDir(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length) library.connectFiles(files);
+  }
+
   // Raison éventuelle pour laquelle l'export .proPlaylist est bloqué.
-  const exportBlock: string | null = !supportsFolder
-    ? 'Export possible sur Chrome / Edge (accès au dossier ProPresenter).'
-    : countSongs(programme) === 0
+  const exportBlock: string | null =
+    countSongs(programme) === 0
       ? 'Ajoutez au moins un chant à la trame.'
-      : null;
+      : !library.ready
+        ? 'Connectez votre dossier ProPresenter (bouton ci-dessus).'
+        : null;
 
   function safeName(): string {
     return (programme.titre || 'programme').replace(/[\\/:*?"<>|]/g, '-');
@@ -212,13 +228,9 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
     setBusy(true);
     setStatus(null);
     try {
-      let fs = library.adapter;
+      const fs = library.adapter;
       if (!fs) {
-        await library.connect();
-        fs = useLibrary.getState().adapter;
-      }
-      if (!fs) {
-        setStatus('Dossier ProPresenter non connecté.');
+        setStatus('Connectez d’abord votre dossier ProPresenter.');
         return;
       }
       const result = await exportProplaylist(
@@ -256,9 +268,10 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
               Connectez votre dossier ProPresenter pour choisir les chants.
             </span>
           )}
-          <Button variant="secondary" size="sm" disabled={library.busy} onClick={() => library.connect()}>
-            {library.busy ? 'Connexion…' : library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
+          <Button variant="secondary" size="sm" onClick={() => dirInputRef.current?.click()}>
+            {library.ready ? 'Changer de dossier' : 'Connecter le dossier'}
           </Button>
+          <input ref={dirInputRef} type="file" multiple className="hidden" onChange={onPickDir} />
           {library.error && <span className="text-xs text-text-muted">{library.error}</span>}
         </div>
       )}
