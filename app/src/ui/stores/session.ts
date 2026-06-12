@@ -1,11 +1,10 @@
 import { create } from 'zustand';
 import type { Session } from '../../domain/auth/types';
-import type { AuthPort } from '../../domain/ports/AuthPort';
-import { localAuthAdapter } from '../../infrastructure/auth/localAuthAdapter';
+import { authPort } from '../../infrastructure/auth/authPort';
 
-// Adapter injecté (remplaçable par Supabase). Clean architecture : l'UI dépend
-// du port, pas de l'implémentation.
-const auth: AuthPort = localAuthAdapter;
+// Clean architecture : l'UI dépend du port, pas de l'implémentation
+// (Supabase réel si configuré, sinon adapter local).
+const auth = authPort;
 
 type Phase = 'loading' | 'anonymous' | 'link-sent' | 'authenticated';
 

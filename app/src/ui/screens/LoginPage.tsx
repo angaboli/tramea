@@ -4,6 +4,7 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSession } from '../stores/session';
+import { isRealAuth } from '../../infrastructure/auth/authPort';
 
 function Logo() {
   return (
@@ -88,15 +89,17 @@ export function LoginPage() {
                     <span className="font-semibold text-text">{pendingEmail}</span>.
                   </p>
                 </div>
-                {/* Mode dev (auth locale) : simuler le retour du lien magique.
-                    Sera retiré avec l'adapter Supabase réel. */}
-                <Button
-                  variant="secondary"
-                  full
-                  onClick={() => pendingEmail && completeLogin(pendingEmail)}
-                >
-                  Continuer (démo)
-                </Button>
+                {/* Mode dev (auth locale) uniquement : simuler le retour du lien.
+                    Masqué dès que Supabase est configuré (vrai lien magique). */}
+                {!isRealAuth && (
+                  <Button
+                    variant="secondary"
+                    full
+                    onClick={() => pendingEmail && completeLogin(pendingEmail)}
+                  >
+                    Continuer (démo)
+                  </Button>
+                )}
               </div>
             )}
           </Card>
