@@ -77,18 +77,30 @@ pointé exactement.
 ```
 
 ### Rôles
+
+> **Le créateur du programme ≠ le créateur de la trame.** Deux métiers distincts :
+> le **programme** (l'ordre de culte, ce qui est imprimé) et la **trame**
+> (la séquence ProPresenter complète + `.proPlaylist`).
+
 | Rôle | Droits |
 |---|---|
-| **admin** | approuve les utilisateurs, gère les rôles, tout faire |
-| **éditeur** | créer / modifier / exporter des trames |
-| **lecteur** | consulter / exporter, sans modifier |
-| *(non approuvé)* | bloqué (écran d'attente) |
+| **basique** | créer / modifier un **programme** (ordre de culte) |
+| **avancé** | créer un programme **ET** la **trame** (exports `.proPlaylist` + PDF) |
+| **admin** | tout faire + **gérer les utilisateurs** (approbation, rôles) |
+| *(non approuvé)* | **aucun accès** — écran « En attente d'approbation » |
 
-### Sécurité
+**Règle stricte :** *aucun nouvel utilisateur n'a accès sans l'autorisation d'un
+admin.* Inscription → statut `pending` → un **admin approuve et attribue un rôle**
+→ accès. Tant que `pending`, l'app est totalement bloquée.
+
+### Sécurité (security-first)
 - Auth via Supabase (JWT). **Clé service jamais exposée** au front (clé anon + RLS).
-- Row Level Security : chaque rôle ne voit/modifie que ce qu'il a le droit.
-- Session mise en cache pour l'usage hors-ligne.
+- **Row Level Security** : chaque rôle ne voit/modifie que ce que son rôle permet ;
+  l'accès est refusé **par défaut** (deny-by-default), autorisé explicitement.
+- Approbation obligatoire avant toute donnée (gate côté UI **et** côté base).
+- Session mise en cache pour l'usage hors-ligne (révocable).
 - Fichiers ProPresenter **jamais envoyés** au serveur.
+- Validation des entrées, pas de secret en clair, dépendances auditées.
 
 ---
 
@@ -299,3 +311,49 @@ Bibliothèque ProPresenter : `C:\Users\Admin\OneDrive - D3\Documents\ProPresente
 - **Écriture d'un `.pro`** (présentation) pour les chants medley/édités — approche
   clone de gabarit, non encore prototypée (la plus lourde).
 - **Thèmes** : appliquer un thème aux diapos générées — spike technique dédié.
+
+---
+
+## 13. Évolutions demandées (lot 2)
+
+### 13.1 Programme vs Trame (deux artefacts)
+- **Programme** = l'ordre de culte (humain, imprimable). Créé par le rôle **basique**.
+- **Trame** = la séquence ProPresenter complète (headers, slides récurrents,
+  `.proPlaylist`). Dérivée d'un programme par le rôle **avancé**.
+- Modèle : `Trame` référence un `programmeId`. Un programme peut exister **sans**
+  trame ; une trame appartient toujours à un programme.
+
+### 13.2 IA — détection des changements de playlist
+- Objectif : si la playlist change (chant ajouté/retiré/réordonné, paroles
+  modifiées), l'app **détecte le diff** et **régénère** un nouveau `.proPlaylist`
+  adapté, sans tout refaire.
+- Approche : un **moteur de diff** (déterministe) compare l'ancien et le nouvel
+  état JSON ; une couche **IA** (assistance) explique les changements, suggère des
+  correspondances de chants et propose la régénération. L'IA **assiste**, la
+  génération reste **déterministe et vérifiable**.
+- Confidentialité : le diff se calcule en local ; aucun fichier ProPresenter
+  n'est envoyé à un service IA (seules des métadonnées de titres si l'utilisateur
+  l'autorise).
+
+### 13.3 Fonctionne SANS dossier ProPresenter choisi
+- L'app doit être **pleinement utilisable même si aucun dossier n'est sélectionné**.
+- **Mode dégradé (sans dossier)** : créer/éditer un programme, gérer la structure,
+  exporter le **PDF**, sauvegarder en JSON. La bibliothèque peut être alimentée
+  manuellement ou par un **catalogue importé** (sans accès disque).
+- **Mode complet (dossier choisi)** : en plus, index des `.pro`, médias, et export
+  `.proPlaylist`.
+- Principe : le choix du dossier est une **capacité optionnelle**, jamais un
+  prérequis bloquant. L'UI s'adapte (les fonctions nécessitant le dossier sont
+  clairement signalées, jamais des culs-de-sac).
+
+### 13.4 Standards d'ingénierie (non négociables)
+- **TDD** : test d'abord, rouge → vert → refactor. Couverture des règles métier.
+- **Clean code** : noms explicites, fonctions courtes, pas de duplication.
+- **SOLID** : responsabilités uniques, dépendances vers des abstractions.
+- **Clean Architecture** : couches `domain` → `application` → `infrastructure` →
+  `ui` ; le domaine ne dépend de rien (ni React, ni Supabase, ni disque).
+- **Security-first** : deny-by-default, validation des entrées, secrets hors du code.
+- **Mobile-first** : conçu d'abord pour petit écran, puis élargi (le design system
+  Tramea est aéré et tactile : cibles 44 px).
+
+Voir `docs/architecture.md` (conventions de code) et `docs/design.md` (tokens).
