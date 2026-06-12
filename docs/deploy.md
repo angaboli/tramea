@@ -1,16 +1,16 @@
 # Tramea — Déploiement (Vercel)
 
-L'app vit dans le sous-dossier `app/` ; le dépôt est un mono-repo léger.
+L'app est à la **racine** du dépôt.
 
 ## Réglages du projet Vercel
-- **Root Directory** : `app`
+- **Root Directory** : `.` (racine — réglage par défaut)
 - **Framework Preset** : Vite
 - **Install Command** : `pnpm install`
 - **Build Command** : `pnpm build`
 - **Output Directory** : `dist`
 - Activer **pnpm** (Vercel le détecte via `pnpm-lock.yaml`).
 
-Le fichier `app/vercel.json` réécrit toutes les routes vers `index.html`
+Le fichier `vercel.json` réécrit toutes les routes vers `index.html`
 (**fallback SPA**) — indispensable pour React Router (`/creator`, `/programme`,
 `/admin`) et les liens profonds.
 

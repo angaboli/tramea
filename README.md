@@ -15,20 +15,62 @@ Application web (PWA) pour **créer** les trames de culte ProPresenter et les
 exporter en **`.proPlaylist`** (import direct dans ProPresenter 7) et en **PDF**
 (feuille de culte).
 
-- 100% navigateur (offline), le dossier ProPresenter reste en local.
-- Auth par lien magique (Supabase), accès restreint par rôles.
-- Données nées structurées en JSON → exports fiables, sans extraction PDF.
+- 100% navigateur (offline), le dossier ProPresenter reste **en local**.
+- Auth par **lien magique** (Supabase), accès restreint par **rôles** (deny-by-default).
+- Données nées structurées en JSON → exports fiables, sans extraction PDF fragile.
+
+## Commandes (pnpm)
+
+```bash
+pnpm install       # installer les dépendances
+pnpm dev           # serveur de dev
+pnpm test          # tests (watch)
+pnpm test:run      # tests (une passe)
+pnpm test:cov      # tests + couverture
+pnpm typecheck     # vérification de types
+pnpm build         # build de production
+```
 
 ## Documentation
 
-- 📋 [Plan & spécifications](docs/plan.md) — vision, architecture, stack, modèle
-  de données, format `.proPlaylist`, sprints et versions.
+- 📋 [Plan & spécifications](docs/plan.md) — vision, architecture, modèle de
+  données, format `.proPlaylist`, sprints et versions.
+- 🎨 [Design system](docs/design.md) — tokens, thèmes, composants.
+- 🏛️ [Architecture & conventions](docs/architecture.md) — couches, SOLID, TDD.
+- 🚀 [Déploiement (Vercel)](docs/deploy.md) · 🔐 [Supabase](docs/supabase.md)
 
 ## Stack
 
 Vite · React · TypeScript · Tailwind · Zustand · vite-plugin-pwa ·
-fflate (zip) · pdf-lib (PDF) · Supabase (auth + données).
+fflate (zip) · pdf-lib (PDF) · idb-keyval (IndexedDB) · Supabase (auth + données).
+
+## Structure (Clean Architecture)
+
+```
+src/
+├── domain/         # règles métier PURES (Programme, Trame, auth, biblio) — testées
+├── application/    # cas d'usage (export .proPlaylist…)
+├── infrastructure/ # adapters : proplaylist (protobuf+zip), fs, pdf, supabase, persistence
+├── ui/
+│   ├── components/ # design system + dialogs
+│   ├── screens/    # login, dashboard Creator, éditeurs, admin
+│   ├── stores/     # Zustand (session, theme, éditeur, bibliothèque…)
+│   └── lib/        # utilitaires (autosave, download…)
+├── styles/tokens.css  # tokens de marque (clair + sombre)
+docs/   · design/ · supabase/   (documentation, handoff design, schéma SQL)
+```
+
+## Authentification (garde d'accès)
+
+À la visite du site, on tombe **toujours sur la page de connexion** (lien magique).
+Deny-by-default : un nouvel utilisateur est `pending` → écran d'attente jusqu'à
+l'approbation d'un **admin**. Sans Supabase configuré, un **adapter local** (dev)
+prend le relais ; définir `VITE_ADMIN_EMAIL` (voir `.env.example`) pour un accès
+admin de démo. Voir [docs/supabase.md](docs/supabase.md) pour l'auth réelle.
 
 ## État
 
-🚧 En cours de démarrage — voir la roadmap dans [docs/plan.md](docs/plan.md).
+Flux complet de bout en bout : connexion → dashboard → éditer un **programme**
+(chants depuis la bibliothèque ProPresenter, moments récurrents) → exporter en
+**PDF** et en **`.proPlaylist`** (médias inclus), avec sauvegarde automatique,
+duplication, import PDF/MD, et **PWA installable / hors-ligne**.

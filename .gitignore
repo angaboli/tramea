@@ -4,6 +4,7 @@ node_modules/
 
 # Build output
 dist/
+dist-ssr/
 build/
 *.tsbuildinfo
 
@@ -15,16 +16,21 @@ build/
 # Coverage / test
 coverage/
 
-# Editor / OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
 # Logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.local
+*.sw?
 
 # Misc
 .cache/
