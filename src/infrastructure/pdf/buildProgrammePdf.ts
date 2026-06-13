@@ -43,7 +43,8 @@ const SECTION_H = 22;
 const HEADER_H = 46;
 
 // Nom de l'église — en-tête STATIQUE (ne dépend pas du programme).
-const CHURCH_NAME = "Église Adventiste - Lille";
+const CHURCH_NAME = "Église adventiste du septième jour de Lille";
+const NAME_GREY = rgb(0.27, 0.31, 0.38);
 
 async function loadFonts(doc: PDFDocument) {
   try {
@@ -87,8 +88,8 @@ async function blobToPng(blob: Blob): Promise<Uint8Array> {
 }
 
 async function loadLogo(doc: PDFDocument): Promise<PDFImage | null> {
-  // pdf-lib n'embarque que PNG/JPG → on convertit (le logo de l'église est en webp).
-  for (const name of ["/logo-eglise.webp", "/logo-eglise.png", "/logo-eglise.jpg"]) {
+  // pdf-lib n'embarque que PNG/JPG → on convertit au besoin.
+  for (const name of ["/logo-lille.png", "/logo-eglise.webp", "/logo-eglise.png", "/logo-eglise.jpg"]) {
     try {
       const res = await fetch(name);
       if (!res.ok) continue;
@@ -143,6 +144,21 @@ export async function buildProgrammePdf(
     while (s.length > 1 && f.widthOfTextAtSize(s + "…", size) > maxW)
       s = s.slice(0, -1);
     return s + "…";
+  };
+  const wrapText = (t: string, f: PDFFont, size: number, maxW: number): string[] => {
+    const words = S(t).split(/\s+/);
+    const out: string[] = [];
+    let cur = "";
+    for (const w of words) {
+      const next = cur ? `${cur} ${w}` : w;
+      if (f.widthOfTextAtSize(next, size) <= maxW) cur = next;
+      else {
+        if (cur) out.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) out.push(cur);
+    return out.length ? out : [""];
   };
   const textL = (s: string, x: number, yy: number, f: PDFFont, size: number) =>
     page.drawText(s, { x, y: yy, size, font: f, color: INK });
@@ -252,51 +268,39 @@ export async function buildProgrammePdf(
     y -= ROW_H;
   }
 
-  // En-tête (bandeau bleu : logo + titre centrés)
-  page.drawRectangle({
-    x: M,
-    y: y - HEADER_H,
-    width: RIGHT - M,
-    height: HEADER_H,
-    color: HEADER_BG,
-  });
-  page.drawRectangle({
-    x: M,
-    y: y - HEADER_H,
-    width: RIGHT - M,
-    height: HEADER_H,
-    borderColor: BORDER,
-    borderWidth: 0.6,
-  });
-  const logoSize = 32;
-  const gap = logo ? logoSize + 12 : 0;
-  const tSize = 15;
-  // En-tête = nom d'église STATIQUE + occasion/titre du programme (modifiable).
-  const occasion = programme.titre?.trim() || `Sabbat ${frDate(programme.date)}`;
-  const title = fit(
-    `${CHURCH_NAME}    ${occasion}`,
-    bold,
-    tSize,
-    RIGHT - M - gap - 16,
-  );
-  const tW = bold.widthOfTextAtSize(title, tSize);
-  const groupW = gap + tW;
-  let gx = M + (RIGHT - M - groupW) / 2;
-  const cy = y - HEADER_H / 2;
+  // ── En-tête de page (au-dessus du tableau) : logo + nom de l'église ──────────
+  const logoSize = 56;
+  const nameSize = 15;
+  const nameLineH = 18;
+  const nameLines = wrapText(CHURCH_NAME, font, nameSize, 220);
+  const nameW = Math.max(...nameLines.map((l) => font.widthOfTextAtSize(l, nameSize)));
+  const lhGap = logo ? 14 : 0;
+  const lhGroupW = (logo ? logoSize + lhGap : 0) + nameW;
+  const lhH = Math.max(logo ? logoSize : 0, nameLines.length * nameLineH) + 8;
+  let lx = M + (RIGHT - M - lhGroupW) / 2;
+  const lhMidY = y - lhH / 2;
   if (logo) {
     const sc = logoSize / Math.max(logo.width, logo.height);
     const dw = logo.width * sc;
     const dh = logo.height * sc;
-    page.drawImage(logo, { x: gx, y: cy - dh / 2, width: dw, height: dh });
-    gx += gap;
+    page.drawImage(logo, { x: lx, y: lhMidY - dh / 2, width: dw, height: dh });
+    lx += logoSize + lhGap;
   }
-  page.drawText(title, {
-    x: gx,
-    y: cy - tSize / 2 + 1,
-    size: tSize,
-    font: bold,
-    color: INK,
-  });
+  let ny = lhMidY + (nameLines.length * nameLineH) / 2 - nameSize;
+  for (const line of nameLines) {
+    page.drawText(line, { x: lx, y: ny, size: nameSize, font, color: NAME_GREY });
+    ny -= nameLineH;
+  }
+  y -= lhH + 12;
+
+  // ── Bandeau bleu (titre / occasion uniquement, sans logo ni nom d'église) ────
+  const occasion = programme.titre?.trim() || `Sabbat ${frDate(programme.date)}`;
+  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: HEADER_BG });
+  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, borderColor: BORDER, borderWidth: 0.6 });
+  const tSize = 15;
+  const titleTxt = fit(occasion, bold, tSize, RIGHT - M - 24);
+  const tW = bold.widthOfTextAtSize(titleTxt, tSize);
+  page.drawText(titleTxt, { x: M + (RIGHT - M - tW) / 2, y: y - HEADER_H / 2 - tSize / 2 + 1, size: tSize, font: bold, color: INK });
   y -= HEADER_H;
 
   // Sections + lignes
