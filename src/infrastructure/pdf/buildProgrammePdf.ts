@@ -117,8 +117,14 @@ function frDate(iso: string): string {
   return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1] ?? ""} ${m[1]}`.trim();
 }
 
+export interface PdfOptions {
+  /** Paroles à annexer, par nom de fichier .pro (lues depuis la bibliothèque). */
+  lyrics?: Record<string, string[]>;
+}
+
 export async function buildProgrammePdf(
   programme: Programme,
+  opts: PdfOptions = {},
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const { font, bold, custom } = await loadFonts(doc);
@@ -320,6 +326,53 @@ export async function buildProgrammePdf(
     for (const item of section.items) {
       ensure(ROW_H);
       drawRow(item);
+    }
+  }
+
+  // Annexe « Paroles » (lues depuis les .pro de l'utilisateur, si fournies).
+  const lyrics = opts.lyrics ?? {};
+  const wrap = (line: string, f: PDFFont, size: number, maxW: number): string[] => {
+    const words = S(line).split(/\s+/);
+    const out: string[] = [];
+    let cur = '';
+    for (const w of words) {
+      const t = cur ? `${cur} ${w}` : w;
+      if (f.widthOfTextAtSize(t, size) <= maxW) cur = t;
+      else {
+        if (cur) out.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) out.push(cur);
+    return out.length ? out : [''];
+  };
+
+  const songs = programme.sections
+    .flatMap((s) => s.items)
+    .filter((it) => it.proFile && lyrics[it.proFile]?.length);
+
+  if (songs.length) {
+    newPage();
+    page.drawText('Paroles', { x: M, y: y - 18, size: 18, font: bold, color: INK });
+    y -= 30;
+    const maxW = RIGHT - M;
+    for (const it of songs) {
+      const blocks = lyrics[it.proFile!];
+      const heading = it.ref ? `${it.titre} — ${it.ref}` : it.titre;
+      if (y - 40 < M) newPage();
+      page.drawText(fit(heading, bold, 13, maxW), { x: M, y: y - 13, size: 13, font: bold, color: INK });
+      y -= 22;
+      for (const block of blocks) {
+        for (const raw of block.split('\n')) {
+          for (const line of wrap(raw, font, 11, maxW)) {
+            if (y - 14 < M) newPage();
+            page.drawText(line, { x: M, y: y - 11, size: 11, font, color: INK });
+            y -= 14;
+          }
+        }
+        y -= 6; // espace entre diapos
+      }
+      y -= 10; // espace entre chants
     }
   }
 

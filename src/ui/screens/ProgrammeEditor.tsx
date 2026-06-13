@@ -200,6 +200,7 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
     missingPresentations: string[];
     missingMedia: string[];
   } | null>(null);
+  const [includeLyrics, setIncludeLyrics] = useState(false);
   const dirInputRef = useRef<HTMLInputElement | null>(null);
   const missing = missingProFiles(programme).length;
   const isTrame = mode === 'trame';
@@ -235,12 +236,28 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
     return (programme.titre || 'programme').replace(/[\\/:*?"<>|]/g, '-');
   }
 
+  async function gatherLyrics(): Promise<Record<string, string[]> | undefined> {
+    const fs = library.adapter;
+    if (!includeLyrics || !fs) return undefined;
+    const { extractLyrics } = await import('../../infrastructure/proplaylist/extractLyrics');
+    const files = [...new Set(
+      programme.sections.flatMap((s) => s.items).map((i) => i.proFile).filter(Boolean) as string[],
+    )];
+    const out: Record<string, string[]> = {};
+    for (const name of files) {
+      const res = await fs.resolvePresentation(name);
+      if (res) out[name] = extractLyrics(res.bytes);
+    }
+    return out;
+  }
+
   async function onPdf() {
     setStatus(null);
     try {
+      const lyrics = await gatherLyrics();
       // pdf-lib est lourd : chargé à la demande (code-splitting).
       const { buildProgrammePdf } = await import('../../infrastructure/pdf/buildProgrammePdf');
-      const bytes = await buildProgrammePdf(programme);
+      const bytes = await buildProgrammePdf(programme, { lyrics });
       downloadBytes(bytes, `${safeName()} - ${programme.date}.pdf`);
     } catch {
       setStatus('Erreur lors de la génération du PDF.');
@@ -383,14 +400,37 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
             )}
           </>
         ) : (
-          <Button
-            variant="secondary"
-            full
-            disabled={programme.sections.length === 0}
-            onClick={onPdf}
-          >
-            Télécharger le PDF
-          </Button>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
+              <input
+                type="checkbox"
+                checked={includeLyrics}
+                onChange={(e) => setIncludeLyrics(e.target.checked)}
+              />
+              Inclure les paroles des chants (depuis la bibliothèque)
+            </label>
+            {includeLyrics && !library.ready && (
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs text-text-muted">Bibliothèque non connectée.</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => (supportsPersistentFolder ? library.connect() : dirInputRef.current?.click())}
+                >
+                  Connecter le dossier
+                </Button>
+                <input ref={setDirInput} type="file" multiple className="hidden" onChange={onPickDir} />
+              </div>
+            )}
+            <Button
+              variant="secondary"
+              full
+              disabled={programme.sections.length === 0}
+              onClick={onPdf}
+            >
+              Télécharger le PDF
+            </Button>
+          </div>
         )}
         {status && <p className="mt-2 text-center text-xs font-semibold text-text-secondary">{status}</p>}
       </div>
