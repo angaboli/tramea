@@ -74,7 +74,13 @@ function ItemRow({
         <SongPicker
           onClose={() => setPicking(false)}
           onPick={(c) =>
-            updateItem(sectionId, item.id, { titre: c.titre, ref: c.ref, proFile: c.proFile })
+            // Chant : on remplit titre + réf. Texte/moment : on garde le libellé,
+            // on ne fait que LIER le fichier .pro de la bibliothèque.
+            updateItem(
+              sectionId,
+              item.id,
+              isSong ? { titre: c.titre, ref: c.ref, proFile: c.proFile } : { proFile: c.proFile },
+            )
           }
         />
       )}
@@ -94,8 +100,8 @@ function ItemRow({
           onChange={(e) => updateItem(sectionId, item.id, { titre: e.target.value })}
         />
         <div className="flex shrink-0 gap-1">
-          {isSong && libraryReady && (
-            <IconBtn label="Choisir dans la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
+          {libraryReady && (
+            <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre" onClick={() => moveItem(sectionId, index, index + 1)} disabled={index === count - 1}>↓</IconBtn>
@@ -115,11 +121,16 @@ function ItemRow({
           <input className={field} placeholder="Fichier .pro (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
         </div>
       ) : (
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
-          <input className={field} placeholder="Chant / contenu" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
-          <input className={field} placeholder="Verset" value={item.verset ?? ''} onChange={(e) => updateItem(sectionId, item.id, { verset: e.target.value })} />
-          <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
+        <div className="mt-2 flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
+            <input className={field} placeholder="Chant / contenu" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+            <input className={field} placeholder="Verset" value={item.verset ?? ''} onChange={(e) => updateItem(sectionId, item.id, { verset: e.target.value })} />
+            <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
+          </div>
+          {/* Lien vers une présentation .pro (ex. Annonces récurrentes, chant du
+              service de fidélité) — incluse dans le .proPlaylist. */}
+          <input className={field} placeholder="Fichier .pro lié (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
         </div>
       )}
     </div>
