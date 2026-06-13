@@ -333,8 +333,8 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
       <Card className="mb-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-text-secondary">Titre</span>
-            <input className={field} placeholder="Église Adventiste – Lille" value={programme.titre} onChange={(e) => setMeta({ titre: e.target.value })} />
+            <span className="text-sm font-semibold text-text-secondary">Titre / occasion</span>
+            <input className={field} placeholder="Sabbat 6 juin 2026" value={programme.titre} onChange={(e) => setMeta({ titre: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-text-secondary">Date</span>

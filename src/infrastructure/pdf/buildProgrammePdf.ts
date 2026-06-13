@@ -42,6 +42,9 @@ const ROW_H = 26;
 const SECTION_H = 22;
 const HEADER_H = 46;
 
+// Nom de l'église — en-tête STATIQUE (ne dépend pas du programme).
+const CHURCH_NAME = "Église Adventiste - Lille";
+
 async function loadFonts(doc: PDFDocument) {
   try {
     doc.registerFontkit(fontkit);
@@ -268,8 +271,10 @@ export async function buildProgrammePdf(
   const logoSize = 32;
   const gap = logo ? logoSize + 12 : 0;
   const tSize = 15;
+  // En-tête = nom d'église STATIQUE + occasion/titre du programme (modifiable).
+  const occasion = programme.titre?.trim() || `Sabbat ${frDate(programme.date)}`;
   const title = fit(
-    `${programme.titre || "Église Adventiste"}    ${frDate(programme.date)}`,
+    `${CHURCH_NAME}    ${occasion}`,
     bold,
     tSize,
     RIGHT - M - gap - 16,
