@@ -1,96 +1,181 @@
 /**
- * Génère la feuille de culte (PDF) d'un programme — mise en page tableau
- * (Élément | Réf | Tonalité | Officiant | Note) avec bandeaux de section.
- * Utilise pdf-lib + polices standard (Helvetica). Ne dépend PAS du dossier
- * ProPresenter : disponible même en mode dégradé.
+ * Feuille de culte (PDF) — mise en page inspirée de la feuille traditionnelle :
+ * bandeau d'en-tête (logo + titre centrés), bandeaux de section, tableau encadré
+ * avec colonnes (Élément | Réf | Tonalité | Officiant | Remarques) et cellules
+ * fusionnées quand l'élément n'est pas un chant.
+ *
+ * Police : Segoe UI (embarquée via /fonts) ; repli sur Helvetica si indisponible
+ * (ex. tests). pdf-lib + fontkit. Ne dépend pas du dossier ProPresenter.
  */
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-import type { Programme } from '../../domain/trame/types';
-import { sanitizeWinAnsi as S } from './winAnsi';
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+import type { Programme, TrameItem } from '../../domain/trame/types';
+import { sanitizeWinAnsi } from './winAnsi';
 
-const W = 595.28; // A4 portrait
+const W = 595.28; // A4
 const H = 841.89;
-const M = 40;
+const M = 28;
 const RIGHT = W - M;
 
-// Colonnes (x de départ)
-const X_TITLE = M;
-const X_REF = 250;
-const X_TON = 320;
-const X_OFF = 370;
-const X_NOTE = 460;
+// Colonnes (x de gauche)
+const X_NAME = M;
+const X_REF = 233;
+const X_TON = 305;
+const X_OFF = 372;
+const X_REM = 446;
 
-const PRIMARY = rgb(0.184, 0.333, 0.498);
-const INK = rgb(0.1, 0.13, 0.16);
-const MUTED = rgb(0.5, 0.55, 0.6);
-const WHITE = rgb(1, 1, 1);
-const RULE = rgb(0.85, 0.88, 0.91);
+// Couleurs (inspirées de la référence)
+const HEADER_BG = rgb(0.62, 0.8, 0.92); // bleu clair
+const SECTION_BG = rgb(0.91, 0.66, 0.49); // saumon
+const INK = rgb(0.1, 0.12, 0.16);
+const BORDER = rgb(0.55, 0.58, 0.62);
+
+const ROW_H = 26;
+const SECTION_H = 22;
+const HEADER_H = 46;
+
+async function loadFonts(doc: PDFDocument) {
+  try {
+    doc.registerFontkit(fontkit);
+    const [reg, bold] = await Promise.all([
+      fetch('/fonts/SegoeUI.ttf').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error()))),
+      fetch('/fonts/SegoeUI-Bold.ttf').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error()))),
+    ]);
+    return {
+      font: await doc.embedFont(reg, { subset: true }),
+      bold: await doc.embedFont(bold, { subset: true }),
+      custom: true,
+    };
+  } catch {
+    return {
+      font: await doc.embedFont(StandardFonts.Helvetica),
+      bold: await doc.embedFont(StandardFonts.HelveticaBold),
+      custom: false,
+    };
+  }
+}
+
+async function loadLogo(doc: PDFDocument): Promise<PDFImage | null> {
+  try {
+    const res = await fetch('/logo-eglise.png');
+    if (!res.ok) return null;
+    return await doc.embedPng(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+function frDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1] ?? ''} ${m[1]}`.trim();
+}
 
 export async function buildProgrammePdf(programme: Programme): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const { font, bold, custom } = await loadFonts(doc);
+  const logo = await loadLogo(doc);
+  const S = custom ? (s: string) => s : sanitizeWinAnsi;
 
   let page: PDFPage = doc.addPage([W, H]);
   let y = H - M;
 
-  const fit = (text: string, f: PDFFont, size: number, maxW: number): string => {
-    let t = S(text);
-    if (f.widthOfTextAtSize(t, size) <= maxW) return t;
-    while (t.length > 1 && f.widthOfTextAtSize(t + '...', size) > maxW) t = t.slice(0, -1);
-    return t + '...';
+  const fit = (t: string, f: PDFFont, size: number, maxW: number): string => {
+    let s = S(t);
+    if (f.widthOfTextAtSize(s, size) <= maxW) return s;
+    while (s.length > 1 && f.widthOfTextAtSize(s + '…', size) > maxW) s = s.slice(0, -1);
+    return s + '…';
+  };
+  const textL = (s: string, x: number, yy: number, f: PDFFont, size: number) =>
+    page.drawText(s, { x, y: yy, size, font: f, color: INK });
+  const textC = (s: string, x1: number, x2: number, yy: number, f: PDFFont, size: number) => {
+    const t = fit(s, f, size, x2 - x1 - 8);
+    const w = f.widthOfTextAtSize(t, size);
+    page.drawText(t, { x: x1 + (x2 - x1 - w) / 2, y: yy, size, font: f, color: INK });
+  };
+  const vline = (x: number, yTop: number, yBot: number) =>
+    page.drawLine({ start: { x, y: yTop }, end: { x, y: yBot }, thickness: 0.6, color: BORDER });
+  const hline = (yy: number) =>
+    page.drawLine({ start: { x: M, y: yy }, end: { x: RIGHT, y: yy }, thickness: 0.6, color: BORDER });
+
+  const newPage = () => {
+    page = doc.addPage([W, H]);
+    y = H - M;
   };
   const ensure = (h: number) => {
-    if (y - h < M) {
-      page = doc.addPage([W, H]);
-      y = H - M;
-    }
+    if (y - h < M) newPage();
   };
-  const text = (s: string, x: number, f: PDFFont, size: number, color = INK) =>
-    page.drawText(s, { x, y: y - size, size, font: f, color });
 
-  // En-tête
-  text(fit(programme.titre || 'Programme du culte', bold, 18, RIGHT - M), X_TITLE, bold, 18);
-  y -= 24;
-  text(S(programme.date), X_TITLE, font, 11, MUTED);
-  y -= 20;
-  page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 0.7, color: RULE });
-  y -= 16;
+  function drawRow(item: TrameItem) {
+    const top = y;
+    const botY = y - ROW_H;
+    const baseline = botY + (ROW_H - 10) / 2 + 1;
+    const ref = item.ref?.trim() ?? '';
+    const ton = item.tonalite?.trim() ?? '';
+    const off = item.officiant?.trim() ?? '';
+    const note = item.note?.trim() ?? '';
+    const merged = !ref && !ton; // pas un chant → contenu centré fusionné
 
-  // En-tête de colonnes
-  text('ÉLÉMENT', X_TITLE, bold, 8, MUTED);
-  text('RÉF', X_REF, bold, 8, MUTED);
-  text('TON.', X_TON, bold, 8, MUTED);
-  text('OFFICIANT', X_OFF, bold, 8, MUTED);
-  text('NOTE', X_NOTE, bold, 8, MUTED);
-  y -= 14;
+    hline(botY);
+    vline(M, top, botY);
+    vline(RIGHT, top, botY);
+    vline(X_REF, top, botY);
+    if (!merged) {
+      vline(X_TON, top, botY);
+      vline(X_OFF, top, botY);
+      vline(X_REM, top, botY);
+    }
 
+    textL(fit(item.titre || '', bold, 10, X_REF - X_NAME - 12), X_NAME + 6, baseline, bold, 10);
+
+    if (merged) {
+      const content = note || off;
+      if (content) textC(content, X_REF, RIGHT, baseline, font, 10);
+    } else {
+      if (ref) textC(ref, X_REF, X_TON, baseline, bold, 10);
+      if (ton) textC(ton, X_TON, X_OFF, baseline, font, 10);
+      if (off) textC(off, X_OFF, X_REM, baseline, font, 9.5);
+      if (note) textC(note, X_REM, RIGHT, baseline, font, 9.5);
+    }
+    y -= ROW_H;
+  }
+
+  // En-tête (bandeau bleu : logo + titre centrés)
+  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: HEADER_BG });
+  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, borderColor: BORDER, borderWidth: 0.6 });
+  const title = `${S(programme.titre || 'Église Adventiste')}    ${frDate(programme.date)}`;
+  const tSize = 15;
+  const tW = bold.widthOfTextAtSize(title, tSize);
+  const logoSize = 30;
+  const gap = logo ? logoSize + 12 : 0;
+  const groupW = gap + tW;
+  let gx = M + (RIGHT - M - groupW) / 2;
+  const cy = y - HEADER_H / 2;
+  if (logo) {
+    const sc = logoSize / Math.max(logo.width, logo.height);
+    const dw = logo.width * sc;
+    const dh = logo.height * sc;
+    page.drawImage(logo, { x: gx, y: cy - dh / 2, width: dw, height: dh });
+    gx += gap;
+  }
+  page.drawText(title, { x: gx, y: cy - tSize / 2 + 1, size: tSize, font: bold, color: INK });
+  y -= HEADER_H;
+
+  // Sections + lignes
   for (const section of programme.sections) {
-    ensure(40);
-    // Bandeau de section
-    page.drawRectangle({ x: M, y: y - 18, width: RIGHT - M, height: 18, color: PRIMARY });
-    page.drawText(fit(section.label, bold, 10, RIGHT - M - 14), {
-      x: M + 8,
-      y: y - 13,
-      size: 10,
-      font: bold,
-      color: WHITE,
-    });
-    y -= 24;
+    ensure(SECTION_H + ROW_H);
+    page.drawRectangle({ x: M, y: y - SECTION_H, width: RIGHT - M, height: SECTION_H, color: SECTION_BG });
+    page.drawRectangle({ x: M, y: y - SECTION_H, width: RIGHT - M, height: SECTION_H, borderColor: BORDER, borderWidth: 0.6 });
+    const sl = fit(section.label, bold, 11, RIGHT - M - 12);
+    const slw = bold.widthOfTextAtSize(sl, 11);
+    page.drawText(sl, { x: M + (RIGHT - M - slw) / 2, y: y - SECTION_H / 2 - 4, size: 11, font: bold, color: INK });
+    y -= SECTION_H;
 
     for (const item of section.items) {
-      ensure(16);
-      const isSong = item.type === 'song';
-      text(fit(item.titre || '(sans titre)', isSong ? bold : font, 9.5, X_REF - X_TITLE - 6),
-        X_TITLE, isSong ? bold : font, 9.5, isSong ? INK : rgb(0.32, 0.36, 0.42));
-      if (item.ref) text(fit(item.ref, font, 9, X_TON - X_REF - 6), X_REF, font, 9, MUTED);
-      if (item.tonalite) text(fit(item.tonalite, font, 9, X_OFF - X_TON - 6), X_TON, font, 9, INK);
-      if (item.officiant) text(fit(item.officiant, font, 9, X_NOTE - X_OFF - 6), X_OFF, font, 9, INK);
-      if (item.note) text(fit(item.note, font, 9, RIGHT - X_NOTE), X_NOTE, font, 9, MUTED);
-      y -= 15;
-      page.drawLine({ start: { x: M, y: y + 4 }, end: { x: RIGHT, y: y + 4 }, thickness: 0.4, color: RULE });
+      ensure(ROW_H);
+      drawRow(item);
     }
-    y -= 6;
   }
 
   return doc.save();
