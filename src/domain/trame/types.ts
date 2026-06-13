@@ -15,6 +15,10 @@ export interface TrameItem {
   tonalite?: string;
   officiant?: string;
   note?: string;
+  /** Verset / passage biblique (ex. méditation). */
+  verset?: string;
+  /** Lien (URL) — ex. bande son du prélude ; cliquable dans le PDF. */
+  lien?: string;
 }
 
 export interface Section {

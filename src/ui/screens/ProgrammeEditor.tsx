@@ -108,14 +108,18 @@ function ItemRow({
             <input className={field} placeholder="Réf (H&L 508)" value={item.ref ?? ''} onChange={(e) => updateItem(sectionId, item.id, { ref: e.target.value })} />
             <input className={field} placeholder="Tonalité" value={item.tonalite ?? ''} onChange={(e) => updateItem(sectionId, item.id, { tonalite: e.target.value })} />
             <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
-            <input className={field} placeholder="Note" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+            <input className={field} placeholder="Note / remarque" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+            <input className={field} placeholder="Verset" value={item.verset ?? ''} onChange={(e) => updateItem(sectionId, item.id, { verset: e.target.value })} />
+            <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
           </div>
           <input className={field} placeholder="Fichier .pro (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
         </div>
       ) : (
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input className={field} placeholder="Officiant" value={item.officiant ?? ''} onChange={(e) => updateItem(sectionId, item.id, { officiant: e.target.value })} />
-          <input className={field} placeholder="Note" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+          <input className={field} placeholder="Chant / contenu" value={item.note ?? ''} onChange={(e) => updateItem(sectionId, item.id, { note: e.target.value })} />
+          <input className={field} placeholder="Verset" value={item.verset ?? ''} onChange={(e) => updateItem(sectionId, item.id, { verset: e.target.value })} />
+          <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
         </div>
       )}
     </div>

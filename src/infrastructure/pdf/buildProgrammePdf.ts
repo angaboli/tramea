@@ -10,6 +10,7 @@
 import {
   PDFDocument,
   StandardFonts,
+  PDFString,
   rgb,
   type PDFFont,
   type PDFPage,
@@ -169,6 +170,26 @@ export async function buildProgrammePdf(
       color: BORDER,
     });
 
+  const LINK = rgb(0.18, 0.33, 0.5);
+  // Lien cliquable aligné à droite de la cellule remarques (label "↧ Lien").
+  const drawLink = (url: string, xRight: number, baseY: number) => {
+    const label = "↧ Lien";
+    const size = 9;
+    const w = font.widthOfTextAtSize(label, size);
+    const x = xRight - w - 6;
+    page.drawText(label, { x, y: baseY, size, font, color: LINK });
+    const annot = doc.context.register(
+      doc.context.obj({
+        Type: "Annot",
+        Subtype: "Link",
+        Rect: [x, baseY - 2, x + w, baseY + size],
+        Border: [0, 0, 0],
+        A: doc.context.obj({ Type: "Action", S: "URI", URI: PDFString.of(url) }),
+      }),
+    );
+    page.node.addAnnot(annot);
+  };
+
   const newPage = () => {
     page = doc.addPage([W, H]);
     y = H - M;
@@ -184,7 +205,10 @@ export async function buildProgrammePdf(
     const ref = item.ref?.trim() ?? "";
     const ton = item.tonalite?.trim() ?? "";
     const off = item.officiant?.trim() ?? "";
+    const verset = item.verset?.trim() ?? "";
+    const lien = item.lien?.trim() ?? "";
     const note = item.note?.trim() ?? "";
+    const remark = [note, verset].filter(Boolean).join("  ·  ");
     const merged = !ref && !ton; // pas un chant → contenu centré fusionné
 
     hline(botY);
@@ -206,14 +230,16 @@ export async function buildProgrammePdf(
     );
 
     if (merged) {
-      const content = note || off;
-      if (content) textC(content, X_REF, RIGHT, baseline, font, 10);
+      const content = [note || off, verset].filter(Boolean).join("  ·  ");
+      // si un lien est présent, on laisse de la place à droite
+      if (content) textC(content, X_REF, lien ? RIGHT - 60 : RIGHT, baseline, font, 10);
     } else {
       if (ref) textC(ref, X_REF, X_TON, baseline, bold, 10);
       if (ton) textC(ton, X_TON, X_OFF, baseline, font, 10);
       if (off) textC(off, X_OFF, X_REM, baseline, font, 9.5);
-      if (note) textC(note, X_REM, RIGHT, baseline, font, 9.5);
+      if (remark) textC(remark, X_REM, lien ? RIGHT - 50 : RIGHT, baseline, font, 9.5);
     }
+    if (lien) drawLink(lien, RIGHT, baseline);
     y -= ROW_H;
   }
 
