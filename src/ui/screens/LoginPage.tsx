@@ -25,9 +25,13 @@ function mapError(err: unknown): string {
   const after = msg.match(/after (\d+) seconds/);
   if (after) return `Patientez ${after[1]} s avant de redemander un lien.`;
   if (msg.includes('invalid login') || msg.includes('credentials'))
-    return 'Email ou mot de passe incorrect.';
+    return 'Email ou mot de passe incorrect (ou compte pas encore créé).';
+  if (msg.includes('already registered') || msg.includes('already exists'))
+    return 'Un compte existe déjà pour cet email — connectez-vous.';
+  if (msg.includes('password') && (msg.includes('6') || msg.includes('least') || msg.includes('short')))
+    return 'Mot de passe trop court (au moins 6 caractères).';
   if (msg.includes('email not confirmed'))
-    return 'Email non confirmé. Utilisez le lien magique une première fois.';
+    return 'Email non confirmé. Confirmez-le via l’email reçu, puis connectez-vous.';
   return 'Échec de la connexion. Vérifiez vos informations et réessayez.';
 }
 
@@ -42,7 +46,11 @@ export function LoginPage() {
   const linkSent = phase === 'link-sent';
 
   async function run(action: () => Promise<void>) {
-    if (busy || !email.trim()) return; // anti double-soumission
+    if (busy) return; // anti double-soumission
+    if (!email.trim()) {
+      setError('Saisissez votre adresse email.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {

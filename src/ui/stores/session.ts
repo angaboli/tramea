@@ -48,8 +48,17 @@ export const useSession = create<SessionState>((set) => ({
 
   async signUpPassword(email: string, password: string) {
     if (!auth.signUp) throw new Error('Création de compte indisponible.');
-    const session = await auth.signUp(email, password);
-    set({ session, phase: 'authenticated' });
+    try {
+      const session = await auth.signUp(email, password);
+      set({ session, phase: 'authenticated' });
+    } catch (e) {
+      // "Confirm email" activé → compte créé, en attente de confirmation par email.
+      if (e instanceof Error && e.message === 'CONFIRMATION_REQUIRED') {
+        set({ phase: 'link-sent', pendingEmail: email.trim().toLowerCase() });
+        return;
+      }
+      throw e;
+    }
   },
 
   async completeLogin(email: string) {

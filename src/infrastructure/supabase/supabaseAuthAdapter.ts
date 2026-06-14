@@ -70,8 +70,9 @@ export const supabaseAuthAdapter: AuthPort = {
     if (error) throw new Error(error.message);
     const s = await sessionFromAuth();
     // Si "Confirm email" est activé, pas de session tant que l'email n'est pas
-    // confirmé → message explicite. Sinon, session `pending` (attente admin).
-    if (!s) throw new Error('Compte créé. Confirmez votre email, puis connectez-vous.');
+    // confirmé → signal dédié (le store affiche « vérifiez votre email »).
+    // Sinon, session `pending` (attente d'approbation admin).
+    if (!s) throw new Error('CONFIRMATION_REQUIRED');
     return s;
   },
 
