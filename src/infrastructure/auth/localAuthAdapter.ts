@@ -49,6 +49,11 @@ export const localAuthAdapter: AuthPort = {
     return session;
   },
 
+  async signInWithPassword(email: string) {
+    // Dev local : pas de vrai mot de passe — accès immédiat (admin si configuré).
+    return this.completeLogin(email);
+  },
+
   async signOut() {
     write(null);
   },

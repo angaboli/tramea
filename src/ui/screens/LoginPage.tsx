@@ -18,9 +18,24 @@ function Logo() {
   );
 }
 
+function mapError(err: unknown): string {
+  const msg = err instanceof Error ? err.message.toLowerCase() : '';
+  if (msg.includes('rate limit') || msg.includes('429'))
+    return 'Trop d’emails envoyés. Réessayez dans quelques minutes, ou connectez-vous par mot de passe.';
+  const after = msg.match(/after (\d+) seconds/);
+  if (after) return `Patientez ${after[1]} s avant de redemander un lien.`;
+  if (msg.includes('invalid login') || msg.includes('credentials'))
+    return 'Email ou mot de passe incorrect.';
+  if (msg.includes('email not confirmed'))
+    return 'Email non confirmé. Utilisez le lien magique une première fois.';
+  return 'Échec de la connexion. Vérifiez vos informations et réessayez.';
+}
+
 export function LoginPage() {
-  const { phase, pendingEmail, sendLink, completeLogin } = useSession();
+  const { phase, pendingEmail, sendLink, signInPassword, completeLogin } = useSession();
+  const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,16 +47,10 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await sendLink(email);
+      if (mode === 'password') await signInPassword(email, password);
+      else await sendLink(email);
     } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      if (msg.includes('rate limit') || msg.includes('429')) {
-        setError(
-          'Trop de tentatives d’envoi. Réessayez dans quelques minutes (limite d’emails Supabase).',
-        );
-      } else {
-        setError("Échec de l’envoi du lien. Vérifiez l’adresse et réessayez.");
-      }
+      setError(mapError(err));
     } finally {
       setBusy(false);
     }
@@ -68,8 +77,10 @@ export function LoginPage() {
                 <div>
                   <h2 className="text-lg font-bold">Connexion</h2>
                   <p className="mt-1 text-sm text-text-secondary">
-                    Recevez un lien magique par email. L'accès est validé par un
-                    administrateur.
+                    {mode === 'password'
+                      ? 'Connexion par mot de passe (immédiate).'
+                      : 'Recevez un lien magique par email.'}{' '}
+                    L'accès est validé par un administrateur.
                   </p>
                 </div>
                 <Input
@@ -81,14 +92,40 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
+                {mode === 'password' && (
+                  <Input
+                    label="Mot de passe"
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                )}
                 <Button type="submit" full disabled={busy}>
-                  {busy ? 'Envoi…' : 'Recevoir le lien magique'}
+                  {busy
+                    ? 'Connexion…'
+                    : mode === 'password'
+                      ? 'Se connecter'
+                      : 'Recevoir le lien magique'}
                 </Button>
                 {error && (
                   <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
                     {error}
                   </p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode((m) => (m === 'password' ? 'magic' : 'password'));
+                    setError(null);
+                  }}
+                  className="text-center text-sm font-semibold text-primary hover:underline"
+                >
+                  {mode === 'password'
+                    ? 'Recevoir un lien magique à la place'
+                    : 'Se connecter par mot de passe'}
+                </button>
               </form>
             ) : (
               <div className="flex flex-col gap-4 text-center">

@@ -48,6 +48,18 @@ export const supabaseAuthAdapter: AuthPort = {
     if (error) throw new Error(error.message);
   },
 
+  async signInWithPassword(email: string, password: string) {
+    if (!supabase) throw new Error('Supabase non configuré.');
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error) throw new Error(error.message);
+    const s = await sessionFromAuth();
+    if (!s) throw new Error('Connexion échouée.');
+    return s;
+  },
+
   async completeLogin() {
     // Avec le lien magique, la session est établie au retour du lien
     // (detectSessionInUrl). On relit simplement la session courante.

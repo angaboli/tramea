@@ -14,6 +14,7 @@ interface SessionState {
   pendingEmail: string | null;
   init: () => Promise<void>;
   sendLink: (email: string) => Promise<void>;
+  signInPassword: (email: string, password: string) => Promise<void>;
   completeLogin: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -36,6 +37,12 @@ export const useSession = create<SessionState>((set) => ({
   async sendLink(email: string) {
     await auth.sendMagicLink(email);
     set({ phase: 'link-sent', pendingEmail: email.trim().toLowerCase() });
+  },
+
+  async signInPassword(email: string, password: string) {
+    if (!auth.signInWithPassword) throw new Error('Connexion par mot de passe indisponible.');
+    const session = await auth.signInWithPassword(email, password);
+    set({ session, phase: 'authenticated' });
   },
 
   async completeLogin(email: string) {

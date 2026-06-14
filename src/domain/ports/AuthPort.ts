@@ -9,6 +9,8 @@ export interface AuthPort {
   getSession(): Promise<Session | null>;
   /** Envoie un lien magique à l'email. */
   sendMagicLink(email: string): Promise<void>;
+  /** Connexion par mot de passe (instantanée, sans email). Optionnel. */
+  signInWithPassword?(email: string, password: string): Promise<Session>;
   /**
    * Finalise la connexion (en prod : déclenché par le retour du lien magique).
    * Renvoie la session — `pending` pour un nouvel utilisateur (deny-by-default).
