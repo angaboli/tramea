@@ -62,9 +62,30 @@ export function LoginPage() {
     }
   }
 
+  // Connexion par mot de passe « intelligente » : on tente la connexion ; si le
+  // compte n'existe pas encore, on le crée automatiquement (puis attente admin).
+  async function passwordAuth() {
+    try {
+      await signInPassword(email, password);
+    } catch (e1) {
+      const m = e1 instanceof Error ? e1.message.toLowerCase() : '';
+      if (m.includes('invalid login') || m.includes('credentials')) {
+        try {
+          await signUpPassword(email, password);
+        } catch (e2) {
+          const m2 = e2 instanceof Error ? e2.message.toLowerCase() : '';
+          if (m2.includes('already registered') || m2.includes('already exists')) {
+            throw new Error('Mot de passe incorrect.');
+          }
+          throw e2;
+        }
+      } else throw e1;
+    }
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    void run(() => (mode === 'password' ? signInPassword(email, password) : sendLink(email)));
+    void run(() => (mode === 'password' ? passwordAuth() : sendLink(email)));
   }
 
   return (
@@ -117,19 +138,14 @@ export function LoginPage() {
                   {busy
                     ? 'Connexion…'
                     : mode === 'password'
-                      ? 'Se connecter'
+                      ? 'Se connecter / créer mon compte'
                       : 'Recevoir le lien magique'}
                 </Button>
                 {mode === 'password' && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    full
-                    disabled={busy}
-                    onClick={() => void run(() => signUpPassword(email, password))}
-                  >
-                    Première fois ? Créer mon compte
-                  </Button>
+                  <p className="text-center text-xs text-text-muted">
+                    Première fois ? Votre compte est créé automatiquement, puis
+                    activé par un administrateur.
+                  </p>
                 )}
                 {error && (
                   <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
