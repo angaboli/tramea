@@ -22,15 +22,26 @@ export function LoginPage() {
   const { phase, pendingEmail, sendLink, completeLogin } = useSession();
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const linkSent = phase === 'link-sent';
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (busy || !email.trim()) return; // anti double-soumission
     setBusy(true);
+    setError(null);
     try {
       await sendLink(email);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      if (msg.includes('rate limit') || msg.includes('429')) {
+        setError(
+          'Trop de tentatives d’envoi. Réessayez dans quelques minutes (limite d’emails Supabase).',
+        );
+      } else {
+        setError("Échec de l’envoi du lien. Vérifiez l’adresse et réessayez.");
+      }
     } finally {
       setBusy(false);
     }
@@ -73,6 +84,11 @@ export function LoginPage() {
                 <Button type="submit" full disabled={busy}>
                   {busy ? 'Envoi…' : 'Recevoir le lien magique'}
                 </Button>
+                {error && (
+                  <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
+                    {error}
+                  </p>
+                )}
               </form>
             ) : (
               <div className="flex flex-col gap-4 text-center">
