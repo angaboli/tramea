@@ -260,8 +260,10 @@ export async function buildProgrammePdf(
     y -= dh + 14;
   }
 
-  // ── Bandeau bleu (titre / occasion uniquement, sans logo ni nom d'église) ────
-  const occasion = programme.titre?.trim() || `Sabbat ${frDate(programme.date)}`;
+  // ── Bandeau bleu (titre + date, sans logo ni nom d'église) ───────────────────
+  const dateTxt = frDate(programme.date);
+  const t = programme.titre?.trim() || "";
+  const occasion = !t ? dateTxt : t.includes(dateTxt) ? t : `${t} ${dateTxt}`;
   page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: HEADER_BG });
   page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, borderColor: BORDER, borderWidth: 0.6 });
   const tSize = 15;
