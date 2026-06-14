@@ -59,4 +59,10 @@ export const supabaseAuthAdapter: AuthPort = {
   async signOut() {
     if (supabase) await supabase.auth.signOut();
   },
+
+  onAuthChange(callback: () => void) {
+    if (!supabase) return () => {};
+    const { data } = supabase.auth.onAuthStateChange(() => callback());
+    return () => data.subscription.unsubscribe();
+  },
 };

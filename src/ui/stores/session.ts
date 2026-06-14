@@ -26,6 +26,11 @@ export const useSession = create<SessionState>((set) => ({
   async init() {
     const session = await auth.getSession();
     set({ session, phase: session ? 'authenticated' : 'anonymous' });
+    // Réagit au retour du lien magique / déconnexion (Supabase) sans rechargement.
+    auth.onAuthChange?.(async () => {
+      const s = await auth.getSession();
+      set({ session: s, phase: s ? 'authenticated' : 'anonymous', pendingEmail: null });
+    });
   },
 
   async sendLink(email: string) {

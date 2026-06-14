@@ -15,4 +15,9 @@ export interface AuthPort {
    */
   completeLogin(email: string): Promise<Session>;
   signOut(): Promise<void>;
+  /**
+   * S'abonne aux changements d'état d'auth (ex. retour du lien magique).
+   * Renvoie une fonction de désabonnement. Optionnel (no-op en local).
+   */
+  onAuthChange?(callback: () => void): () => void;
 }
