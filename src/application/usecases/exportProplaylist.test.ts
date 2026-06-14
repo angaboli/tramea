@@ -2,12 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { unzipSync } from 'fflate';
 import { exportProplaylist, type ExportItem } from './exportProplaylist';
 import type { FileSystemPort, ProResource } from '../../domain/ports/FileSystemPort';
-import { walk, get, getAll, decodeUtf8 } from '../../infrastructure/proplaylist/protobuf';
+import { walk, get, getAll, decodeUtf8, encBytesField, encStrField } from '../../infrastructure/proplaylist/protobuf';
 
 function bytes(s: string): Uint8Array {
   const out = new Uint8Array(s.length);
   for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 0xff;
   return out;
+}
+
+// .pro synthétique avec une diapo (chemin RTF f13/f10/f23/f2/f2/f1) + nom.
+function fakePro(): Uint8Array {
+  const rtf = encBytesField(1, bytes('{\\rtf0\\cb3}'));
+  const slide = encBytesField(10, encBytesField(23, encBytesField(2, encBytesField(2, rtf))));
+  return new Uint8Array([...encStrField(3, 'Base'), ...encBytesField(13, slide)]);
 }
 
 function fakeFs(
@@ -62,6 +69,24 @@ describe('exportProplaylist', () => {
     expect(decodeUtf8(get(playlist, 2) as Uint8Array)).toBe('sabbat 13/06/26');
     const container = walk(get(playlist, 13) as Uint8Array);
     expect(getAll(container, 1).length).toBe(3);
+  });
+
+  it('bundle un chant personnalisé (medley) en clonant le .pro de base', async () => {
+    const base: Record<string, ProResource> = {
+      'Base.pro': { relPath: 'Libraries/Base.pro', absPath: 'Libraries/Base.pro', bytes: fakePro() },
+    };
+    const res = await exportProplaylist(
+      {
+        playlistName: 'x',
+        items: [{ kind: 'custom', label: 'Mon Medley', baseProFile: 'Base.pro', slides: ['Strophe A'] }],
+      },
+      fakeFs(base, {}),
+    );
+    expect(res.proCount).toBe(1);
+    const files = unzipSync(res.zip);
+    expect(Object.keys(files)).toContain('Mon Medley.pro');
+    // Le .pro généré porte le nouveau titre.
+    expect(decodeUtf8(get(walk(files['Mon Medley.pro']), 3) as Uint8Array)).toBe('Mon Medley');
   });
 
   it('signale un média introuvable sans planter', async () => {

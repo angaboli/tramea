@@ -14,7 +14,14 @@ export function programmeToExportItems(programme: Programme): ExportItem[] {
     out.push({ kind: 'header', label: section.label });
     for (const item of section.items) {
       const label = item.ref ? `${item.titre} - ${item.ref}` : item.titre;
-      if (item.proFile) {
+      if (item.customSong?.baseProFile) {
+        out.push({
+          kind: 'custom',
+          label: item.titre,
+          baseProFile: item.customSong.baseProFile,
+          slides: item.customSong.slides,
+        });
+      } else if (item.proFile) {
         out.push({ kind: 'song', label, proFile: item.proFile });
       } else if (item.type === 'song') {
         out.push({ kind: 'header', label: `[A AJOUTER] ${label}` });

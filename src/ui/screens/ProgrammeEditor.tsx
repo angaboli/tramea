@@ -7,6 +7,7 @@ import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSession } from '../stores/session';
 import { useLibrary, supportsFolder, supportsPersistentFolder } from '../stores/library';
 import { SongPicker } from '../components/SongPicker';
+import { MedleyDialog } from '../components/MedleyDialog';
 import { canCreateTrame } from '../../domain/auth/access';
 import { countSongs, missingProFiles } from '../../domain/trame/programme';
 import { RECURRING_LABELS } from '../../domain/trame/recurring';
@@ -67,6 +68,7 @@ function ItemRow({
   const { updateItem, removeItem, moveItem } = useProgrammeEditor();
   const libraryReady = useLibrary((s) => s.ready);
   const [picking, setPicking] = useState(false);
+  const [medley, setMedley] = useState(false);
   const isSong = item.type === 'song';
   return (
     <div className="rounded-md border border-border bg-surface-2 p-2.5">
@@ -81,6 +83,22 @@ function ItemRow({
               item.id,
               isSong ? { titre: c.titre, ref: c.ref, proFile: c.proFile } : { proFile: c.proFile },
             )
+          }
+        />
+      )}
+      {medley && (
+        <MedleyDialog
+          initial={
+            item.customSong
+              ? { titre: item.titre, baseProFile: item.customSong.baseProFile, slides: item.customSong.slides }
+              : { titre: item.titre }
+          }
+          onClose={() => setMedley(false)}
+          onSave={(v) =>
+            updateItem(sectionId, item.id, {
+              titre: v.titre,
+              customSong: { baseProFile: v.baseProFile, slides: v.slides },
+            })
           }
         />
       )}
@@ -102,6 +120,9 @@ function ItemRow({
         <div className="flex shrink-0 gap-1">
           {libraryReady && (
             <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
+          )}
+          {isSong && libraryReady && (
+            <IconBtn label="Chant personnalisé / medley" onClick={() => setMedley(true)}>🎚</IconBtn>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre" onClick={() => moveItem(sectionId, index, index + 1)} disabled={index === count - 1}>↓</IconBtn>

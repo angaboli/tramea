@@ -10,11 +10,13 @@ import {
 } from '../../infrastructure/proplaylist/buildData';
 import { assembleProplaylistZip } from '../../infrastructure/proplaylist/assembleZip';
 import { mediaBasenames } from '../../infrastructure/proplaylist/mediaRefs';
+import { retextPro } from '../../infrastructure/proplaylist/retextPro';
 
-/** Élément de séquence en entrée : bandeau de section, ou chant (lié à un .pro). */
+/** Élément de séquence en entrée : bandeau, chant lié, ou chant personnalisé (medley). */
 export type ExportItem =
   | { kind: 'header'; label: string }
-  | { kind: 'song'; label: string; proFile: string };
+  | { kind: 'song'; label: string; proFile: string }
+  | { kind: 'custom'; label: string; baseProFile: string; slides: string[] };
 
 export interface ExportInput {
   playlistName: string;
@@ -47,9 +49,36 @@ export async function exportProplaylist(
   const missingPresentations: string[] = [];
   const missingMedia = new Set<string>();
 
+  async function bundleMedia(proBytes: Uint8Array) {
+    for (const mname of mediaBasenames(proBytes)) {
+      if (media[mname]) continue;
+      const bytes = await fs.resolveMedia(mname);
+      if (bytes) media[mname] = bytes;
+      else missingMedia.add(mname);
+    }
+  }
+  const safe = (s: string) => s.replace(/[\\/:*?"<>|]/g, '-');
+
   for (const item of input.items) {
     if (item.kind === 'header') {
       playlistItems.push({ type: 'header', label: item.label });
+      continue;
+    }
+
+    if (item.kind === 'custom') {
+      // Medley : on clone le .pro de base et on remplace le texte des diapos.
+      const base = await fs.resolvePresentation(item.baseProFile);
+      if (!base) {
+        playlistItems.push({ type: 'header', label: `[A AJOUTER] ${item.label}` });
+        missingPresentations.push(item.label);
+        continue;
+      }
+      const { bytes } = retextPro(base.bytes, { title: item.label, slides: item.slides });
+      const fileName = `${safe(item.label)}.pro`;
+      presentations[fileName] = bytes;
+      const relPath = `Libraries/${fileName}`;
+      playlistItems.push({ type: 'file', label: item.label, absPath: relPath, relPath });
+      await bundleMedia(bytes);
       continue;
     }
 
@@ -69,14 +98,7 @@ export async function exportProplaylist(
       absPath: res.absPath,
       relPath: res.relPath,
     });
-
-    // Médias référencés par ce .pro.
-    for (const mname of mediaBasenames(res.bytes)) {
-      if (media[mname]) continue;
-      const bytes = await fs.resolveMedia(mname);
-      if (bytes) media[mname] = bytes;
-      else missingMedia.add(mname);
-    }
+    await bundleMedia(res.bytes);
   }
 
   const data = buildProplaylistData(input.playlistName, playlistItems);
