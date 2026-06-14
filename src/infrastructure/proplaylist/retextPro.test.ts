@@ -39,9 +39,12 @@ describe('setAtPath', () => {
 });
 
 describe('retextPro', () => {
-  // Construit une présentation synthétique : 2 diapos avec le chemin RTF + nom.
-  const slide = (rtf: string) =>
-    encBytesField(10, encBytesField(23, encBytesField(2, encBytesField(2, encBytesField(1, bytes(rtf))))));
+  // Diapo synthétique avec le RTF au chemin affiché f10/f23/f2/f1/f1/f1/f13/f5.
+  const slide = (rtf: string) => {
+    let inner = bytes(rtf);
+    for (const f of [5, 13, 1, 1, 1, 2, 23, 10]) inner = encBytesField(f, inner);
+    return inner;
+  };
   const base = new Uint8Array([
     ...encStrField(3, 'Ancien titre'),
     ...encBytesField(13, slide('{\\rtf0\\cb3}')),
@@ -63,7 +66,7 @@ describe('retextPro', () => {
 
     const rtfOf = (sl: Uint8Array) => {
       let b = sl;
-      for (const p of [10, 23, 2, 2, 1]) b = u(get(walk(b), p));
+      for (const p of [10, 23, 2, 1, 1, 1, 13, 5]) b = u(get(walk(b), p));
       return decodeUtf8(b);
     };
     const slides = getAll(top, 13).map((s) => rtfOf(u(s)));

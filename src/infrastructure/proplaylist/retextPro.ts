@@ -3,10 +3,10 @@
  * existante (structure 100 % valide) et en remplaçant le texte de ses diapos
  * + le titre. Bien plus sûr que générer un `.pro` de zéro.
  *
- * Le texte d'une diapo se trouve dans un fragment RTF à
- *   f13 → f10 → f23 → f2 → f2 → f1
- * On remplace le corps de texte (après le prologue de format `…\cbN`) et on
- * réencode (les longueurs se propagent via l'encodeur exact).
+ * Le texte AFFICHÉ d'une diapo se trouve dans un fragment RTF à
+ *   f13 → f10 → f23 → f2 → f1 → f1 → f1 → f13 → f5
+ * (et NON dans f10/f23/f2/f2, qui est un RTF de style constant). On remplace le
+ * corps de texte (après le prologue de format `…\cbN`) et on réencode.
  */
 import {
   walk,
@@ -19,7 +19,7 @@ import {
   type Field,
 } from './protobuf';
 
-const SLIDE_RTF_PATH = [10, 23, 2, 2, 1];
+const SLIDE_RTF_PATH = [10, 23, 2, 1, 1, 1, 13, 5];
 
 function latin1(bytes: Uint8Array): string {
   let s = '';

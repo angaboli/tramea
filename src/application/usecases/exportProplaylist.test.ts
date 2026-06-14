@@ -10,11 +10,11 @@ function bytes(s: string): Uint8Array {
   return out;
 }
 
-// .pro synthétique avec une diapo (chemin RTF f13/f10/f23/f2/f2/f1) + nom.
+// .pro synthétique avec une diapo (chemin RTF affiché f10/f23/f2/f1/f1/f1/f13/f5) + nom.
 function fakePro(): Uint8Array {
-  const rtf = encBytesField(1, bytes('{\\rtf0\\cb3}'));
-  const slide = encBytesField(10, encBytesField(23, encBytesField(2, encBytesField(2, rtf))));
-  return new Uint8Array([...encStrField(3, 'Base'), ...encBytesField(13, slide)]);
+  let inner = bytes('{\\rtf0\\cb3}');
+  for (const f of [5, 13, 1, 1, 1, 2, 23, 10]) inner = encBytesField(f, inner);
+  return new Uint8Array([...encStrField(3, 'Base'), ...encBytesField(13, inner)]);
 }
 
 function fakeFs(
