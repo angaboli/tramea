@@ -27,7 +27,14 @@ function write(session: Session | null) {
   else localStorage.removeItem(SESSION_KEY);
 }
 
-const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.toLowerCase();
+// Liste d'emails admin (séparés par des virgules ou des espaces).
+const adminEmails = new Set(
+  ((import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ?? '')
+    .toLowerCase()
+    .split(/[,\s]+/)
+    .map((e) => e.trim())
+    .filter(Boolean),
+);
 
 export const localAuthAdapter: AuthPort = {
   async getSession() {
@@ -41,7 +48,7 @@ export const localAuthAdapter: AuthPort = {
 
   async completeLogin(email: string) {
     const normalized = email.trim().toLowerCase();
-    const isAdmin = !!adminEmail && normalized === adminEmail;
+    const isAdmin = adminEmails.has(normalized);
     const session: Session = isAdmin
       ? { email: normalized, status: 'approved', role: 'admin' }
       : { email: normalized, status: 'pending', role: null };
