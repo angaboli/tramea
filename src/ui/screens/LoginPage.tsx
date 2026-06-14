@@ -32,7 +32,16 @@ function mapError(err: unknown): string {
     return 'Mot de passe trop court (au moins 6 caractères).';
   if (msg.includes('email not confirmed'))
     return 'Email non confirmé. Confirmez-le via l’email reçu, puis connectez-vous.';
-  return 'Échec de la connexion. Vérifiez vos informations et réessayez.';
+  if (msg.includes('signup') && (msg.includes('disabled') || msg.includes('not allowed')))
+    return 'Inscriptions désactivées sur Supabase (Authentication → Sign Up → activez « Allow new users to sign up »).';
+  if (msg.includes('redirect'))
+    return 'URL de redirection non autorisée — ajoutez l’URL de l’app dans Supabase (Authentication → URL Configuration).';
+  if (msg.includes('invalid') && msg.includes('email'))
+    return 'Adresse email invalide.';
+  // Cas inconnu : on affiche le vrai message de Supabase pour diagnostiquer.
+  return err instanceof Error && err.message
+    ? `Échec : ${err.message}`
+    : 'Échec de la connexion. Réessayez.';
 }
 
 export function LoginPage() {
