@@ -34,3 +34,8 @@ Thumbs.db
 
 # Misc
 .cache/
+
+# Supabase CLI (temp / linked secrets)
+supabase/.temp/
+supabase/.branches/
+.supabase/

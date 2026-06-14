@@ -10,12 +10,27 @@ Tant que Supabase n'est pas configuré, l'app utilise l'**adapter d'auth local**
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY` (jamais la clé *service*).
 
-## 2. Configurer le schéma
-Dans *SQL Editor*, exécuter `supabase/schema.sql` :
-- table `profiles` (statut + rôle), **RLS activée** ;
-- fonction `is_admin` (évite la récursion RLS) ;
-- politiques : chacun lit son profil, l'admin lit/écrit tout ;
-- trigger : à l'inscription, un profil `pending` (sans rôle) est créé.
+## 2. Appliquer les migrations
+Les migrations vivent dans `supabase/migrations/` (versionnées, comme Prisma).
+
+**Workflow recommandé — Supabase CLI** :
+```bash
+pnpm dlx supabase login                                  # ouvre le navigateur
+pnpm dlx supabase link --project-ref rvjvpcldqztijkyhuknk # demande le mot de passe DB
+pnpm dlx supabase db push                                # applique les migrations
+```
+**Changement de schéma plus tard** :
+```bash
+pnpm dlx supabase migration new mon_changement   # crée un fichier SQL daté
+#   … on édite le SQL …
+pnpm dlx supabase db push                          # applique
+```
+
+**Alternative one-shot (sans CLI)** : copier le contenu de
+`supabase/migrations/0001…_init.sql` dans *SQL Editor* et l'exécuter.
+
+La migration initiale crée : `profiles` (statut + rôle, RLS, `is_admin`, trigger
+d'inscription) et `programmes` (sauvegarde cloud, RLS par propriétaire).
 
 ## 3. Configurer l'auth
 - *Authentication → Providers → Email* : activer **Magic Link**.

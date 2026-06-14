@@ -1,0 +1,3 @@
+# Tramea — configuration Supabase CLI.
+# Le project_id local ; la liaison au projet distant se fait via `supabase link`.
+project_id = "tramea"
