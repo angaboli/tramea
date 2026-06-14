@@ -15,6 +15,7 @@ interface SessionState {
   init: () => Promise<void>;
   sendLink: (email: string) => Promise<void>;
   signInPassword: (email: string, password: string) => Promise<void>;
+  signUpPassword: (email: string, password: string) => Promise<void>;
   completeLogin: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -42,6 +43,12 @@ export const useSession = create<SessionState>((set) => ({
   async signInPassword(email: string, password: string) {
     if (!auth.signInWithPassword) throw new Error('Connexion par mot de passe indisponible.');
     const session = await auth.signInWithPassword(email, password);
+    set({ session, phase: 'authenticated' });
+  },
+
+  async signUpPassword(email: string, password: string) {
+    if (!auth.signUp) throw new Error('Création de compte indisponible.');
+    const session = await auth.signUp(email, password);
     set({ session, phase: 'authenticated' });
   },
 

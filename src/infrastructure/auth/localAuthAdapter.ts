@@ -61,6 +61,11 @@ export const localAuthAdapter: AuthPort = {
     return this.completeLogin(email);
   },
 
+  async signUp(email: string) {
+    // Dev local : équivalent à une connexion (statut admin/pending selon l'email).
+    return this.completeLogin(email);
+  },
+
   async signOut() {
     write(null);
   },

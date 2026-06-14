@@ -11,6 +11,8 @@ export interface AuthPort {
   sendMagicLink(email: string): Promise<void>;
   /** Connexion par mot de passe (instantanée, sans email). Optionnel. */
   signInWithPassword?(email: string, password: string): Promise<Session>;
+  /** Création de compte (email + mot de passe choisi). Statut `pending` ensuite. */
+  signUp?(email: string, password: string): Promise<Session>;
   /**
    * Finalise la connexion (en prod : déclenché par le retour du lien magique).
    * Renvoie la session — `pending` pour un nouvel utilisateur (deny-by-default).

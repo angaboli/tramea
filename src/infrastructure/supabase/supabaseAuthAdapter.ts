@@ -60,6 +60,21 @@ export const supabaseAuthAdapter: AuthPort = {
     return s;
   },
 
+  async signUp(email: string, password: string) {
+    if (!supabase) throw new Error('Supabase non configuré.');
+    const { error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) throw new Error(error.message);
+    const s = await sessionFromAuth();
+    // Si "Confirm email" est activé, pas de session tant que l'email n'est pas
+    // confirmé → message explicite. Sinon, session `pending` (attente admin).
+    if (!s) throw new Error('Compte créé. Confirmez votre email, puis connectez-vous.');
+    return s;
+  },
+
   async completeLogin() {
     // Avec le lien magique, la session est établie au retour du lien
     // (detectSessionInUrl). On relit simplement la session courante.

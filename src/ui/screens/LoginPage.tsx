@@ -32,7 +32,7 @@ function mapError(err: unknown): string {
 }
 
 export function LoginPage() {
-  const { phase, pendingEmail, sendLink, signInPassword, completeLogin } = useSession();
+  const { phase, pendingEmail, sendLink, signInPassword, signUpPassword, completeLogin } = useSession();
   const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,19 +41,22 @@ export function LoginPage() {
 
   const linkSent = phase === 'link-sent';
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function run(action: () => Promise<void>) {
     if (busy || !email.trim()) return; // anti double-soumission
     setBusy(true);
     setError(null);
     try {
-      if (mode === 'password') await signInPassword(email, password);
-      else await sendLink(email);
+      await action();
     } catch (err) {
       setError(mapError(err));
     } finally {
       setBusy(false);
     }
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    void run(() => (mode === 'password' ? signInPassword(email, password) : sendLink(email)));
   }
 
   return (
@@ -109,6 +112,17 @@ export function LoginPage() {
                       ? 'Se connecter'
                       : 'Recevoir le lien magique'}
                 </Button>
+                {mode === 'password' && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    full
+                    disabled={busy}
+                    onClick={() => void run(() => signUpPassword(email, password))}
+                  >
+                    Première fois ? Créer mon compte
+                  </Button>
+                )}
                 {error && (
                   <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
                     {error}
