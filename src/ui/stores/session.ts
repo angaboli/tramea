@@ -6,6 +6,11 @@ import { authPort } from '../../infrastructure/auth/authPort';
 // (Supabase réel si configuré, sinon adapter local).
 const auth = authPort;
 
+// Contournement TEMPORAIRE de l'auth (VITE_AUTH_DISABLED=true) : accès admin
+// direct, sans connexion. À remettre à false une fois Supabase stabilisé.
+const bypassAuth = import.meta.env.VITE_AUTH_DISABLED === 'true';
+const BYPASS_SESSION: Session = { email: 'admin@local', status: 'approved', role: 'admin' };
+
 type Phase = 'loading' | 'anonymous' | 'link-sent' | 'authenticated';
 
 interface SessionState {
@@ -26,6 +31,10 @@ export const useSession = create<SessionState>((set) => ({
   pendingEmail: null,
 
   async init() {
+    if (bypassAuth) {
+      set({ session: BYPASS_SESSION, phase: 'authenticated' });
+      return;
+    }
     const session = await auth.getSession();
     set({ session, phase: session ? 'authenticated' : 'anonymous' });
     // Réagit au retour du lien magique / déconnexion (Supabase) sans rechargement.
@@ -67,6 +76,7 @@ export const useSession = create<SessionState>((set) => ({
   },
 
   async signOut() {
+    if (bypassAuth) return; // auth contournée : pas de déconnexion
     await auth.signOut();
     set({ session: null, phase: 'anonymous', pendingEmail: null });
   },
