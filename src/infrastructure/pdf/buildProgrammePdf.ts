@@ -336,15 +336,18 @@ export async function buildProgrammePdf(
     const maxW = RIGHT - M;
     for (const it of songs) {
       const blocks = lyrics[it.proFile!];
-      const heading = it.ref ? `${it.titre} — ${it.ref}` : it.titre;
+      const heading = fit(it.ref ? `${it.titre} — ${it.ref}` : it.titre, bold, 13, maxW);
       if (y - 40 < M) newPage();
-      page.drawText(fit(heading, bold, 13, maxW), { x: M, y: y - 13, size: 13, font: bold, color: INK });
+      // Paroles centrées (contrairement au tableau du programme, aligné à gauche).
+      const headW = bold.widthOfTextAtSize(heading, 13);
+      page.drawText(heading, { x: M + (maxW - headW) / 2, y: y - 13, size: 13, font: bold, color: INK });
       y -= 22;
       for (const block of blocks) {
         for (const raw of block.split('\n')) {
           for (const line of wrap(raw, font, 11, maxW)) {
             if (y - 14 < M) newPage();
-            page.drawText(line, { x: M, y: y - 11, size: 11, font, color: INK });
+            const w = font.widthOfTextAtSize(line, 11);
+            page.drawText(line, { x: M + (maxW - w) / 2, y: y - 11, size: 11, font, color: INK });
             y -= 14;
           }
         }
