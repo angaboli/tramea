@@ -348,9 +348,9 @@ export async function buildProgrammePdf(
             y -= 14;
           }
         }
-        y -= 6; // espace entre diapos
+        y -= 16; // espace après chaque strophe (diapo)
       }
-      y -= 10; // espace entre chants
+      y -= 28; // espace après chaque chant
     }
   }
 
