@@ -8,8 +8,12 @@ function uid(): string {
   return crypto.randomUUID();
 }
 
-export function emptyProgramme(date: string, titre = ''): Programme {
-  return { id: uid(), date, titre, sections: [] };
+export function emptyProgramme(
+  date: string,
+  titre = '',
+  kind: Programme['kind'] = 'programme',
+): Programme {
+  return { id: uid(), date, titre, sections: [], kind };
 }
 
 function move<T>(arr: readonly T[], from: number, to: number): T[] {

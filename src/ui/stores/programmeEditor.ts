@@ -5,7 +5,7 @@ import * as edit from '../../domain/trame/edit';
 
 interface EditorState {
   programme: Programme;
-  reset: (date?: string, titre?: string) => void;
+  reset: (date?: string, titre?: string, kind?: Programme['kind']) => void;
   load: (p: Programme) => void;
   setMeta: (patch: Partial<Pick<Programme, 'titre' | 'date'>>) => void;
   addSection: (label: string) => void;
@@ -25,8 +25,8 @@ export const useProgrammeEditor = create<EditorState>()(
     (set) => ({
       programme: edit.emptyProgramme(today()),
 
-      reset: (date = today(), titre = '') =>
-        set({ programme: edit.emptyProgramme(date, titre) }),
+      reset: (date = today(), titre = '', kind: Programme['kind'] = 'programme') =>
+        set({ programme: edit.emptyProgramme(date, titre, kind) }),
       load: (p) => set({ programme: p }),
       setMeta: (patch) => set((s) => ({ programme: { ...s.programme, ...patch } })),
 

@@ -12,6 +12,7 @@ export function duplicateProgramme(p: Programme, date?: string): Programme {
     id: uid(),
     titre: p.titre,
     date: date ?? p.date,
+    kind: p.kind,
     sections: p.sections.map((s) => ({
       id: uid(),
       label: s.label,

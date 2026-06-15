@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { SavedProgramme } from '../../domain/ports/ProgrammeRepositoryPort';
-import { programmeRepository } from '../../infrastructure/persistence/idbProgrammeRepository';
+import { programmeRepository } from '../../infrastructure/persistence/programmeRepository';
 
 interface SavedState {
   items: SavedProgramme[];

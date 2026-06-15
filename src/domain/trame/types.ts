@@ -40,6 +40,12 @@ export interface Programme {
   date: string; // ISO yyyy-mm-dd
   titre: string;
   sections: Section[];
+  /**
+   * Nature du document : « programme » (ordre de culte imprimable) ou « trame »
+   * (séquence ProPresenter). Permet de rouvrir directement dans le bon mode.
+   * Optionnel pour compat. ascendante (absent ⇒ programme).
+   */
+  kind?: 'programme' | 'trame';
 }
 
 /**

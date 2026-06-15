@@ -35,8 +35,10 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programmes.length]);
 
+  // Crée une trame à partir d'un programme : nouvel enregistrement (id propre,
+  // kind 'trame') pour ne pas écraser le programme source et pouvoir la rouvrir.
   function useProgramme(p: Programme) {
-    load(p);
+    load({ ...p, id: crypto.randomUUID(), kind: 'trame' });
     navigate('/trame');
   }
 
@@ -46,7 +48,7 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
   }
 
   function fromScratch() {
-    reset();
+    reset(undefined, undefined, 'trame');
     navigate('/trame');
   }
 

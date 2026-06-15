@@ -35,6 +35,3 @@ export class IdbProgrammeRepository implements ProgrammeRepositoryPort {
     await del(id, this.store);
   }
 }
-
-/** Instance partagée (singleton applicatif). */
-export const programmeRepository = new IdbProgrammeRepository();

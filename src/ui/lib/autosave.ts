@@ -1,6 +1,6 @@
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
-import { programmeRepository } from '../../infrastructure/persistence/idbProgrammeRepository';
+import { programmeRepository } from '../../infrastructure/persistence/programmeRepository';
 import type { Programme } from '../../domain/trame/types';
 
 const DEBOUNCE_MS = 600;

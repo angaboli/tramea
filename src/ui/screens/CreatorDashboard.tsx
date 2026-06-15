@@ -51,15 +51,20 @@ export function CreatorDashboard() {
     resetProgramme();
     navigate('/programme');
   }
+  // Rouvre dans le bon mode : une trame retourne directement sur /trame,
+  // un programme sur /programme (sans repasser par la création).
+  function routeFor(p: Programme) {
+    return p.kind === 'trame' ? '/trame' : '/programme';
+  }
   function openProgramme(p: Programme) {
     loadProgramme(p);
-    navigate('/programme');
+    navigate(routeFor(p));
   }
 
   function duplicate(p: Programme) {
     const today = new Date().toISOString().slice(0, 10);
     loadProgramme(duplicateProgramme(p, today));
-    navigate('/programme');
+    navigate(routeFor(p));
   }
 
   const fileInput = useRef<HTMLInputElement>(null);
@@ -134,7 +139,7 @@ export function CreatorDashboard() {
       {/* Mes programmes (sauvegardés localement) */}
       <Card>
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold">Mes programmes</h2>
+          <h2 className="text-lg font-bold">Mes programmes et trames</h2>
           <Badge tone="neutral">{saved.items.length}</Badge>
         </div>
         {saved.items.length === 0 ? (
@@ -147,11 +152,16 @@ export function CreatorDashboard() {
               <li key={rec.programme.id} className="flex items-center gap-3 py-2.5">
                 <button
                   onClick={() => openProgramme(rec.programme)}
-                  className="flex-1 truncate text-left hover:text-primary focus-visible:outline-none"
+                  className="flex flex-1 items-center gap-2 truncate text-left hover:text-primary focus-visible:outline-none"
                 >
-                  <span className="font-semibold">{rec.programme.titre || 'Sans titre'}</span>
-                  <span className="ml-2 text-sm text-text-muted">
-                    {rec.programme.date} · {countSongs(rec.programme)} chant(s)
+                  <Badge tone={rec.programme.kind === 'trame' ? 'accent' : 'primary'}>
+                    {rec.programme.kind === 'trame' ? 'Trame' : 'Programme'}
+                  </Badge>
+                  <span className="truncate">
+                    <span className="font-semibold">{rec.programme.titre || 'Sans titre'}</span>
+                    <span className="ml-2 text-sm text-text-muted">
+                      {rec.programme.date} · {countSongs(rec.programme)} chant(s)
+                    </span>
                   </span>
                 </button>
                 <Button variant="secondary" size="sm" onClick={() => duplicate(rec.programme)}>
