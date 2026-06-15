@@ -16,6 +16,7 @@ import { exportProplaylist } from '../../application/usecases/exportProplaylist'
 import { programmeToExportItems } from '../../application/usecases/programmeToExportItems';
 import { downloadBytes } from '../lib/download';
 
+// Trame : liste complète (séquence technique variée).
 const SECTION_PRESETS = [
   'ÉCOLE DU SABBAT',
   "CULTE D'ADORATION",
@@ -25,6 +26,9 @@ const SECTION_PRESETS = [
   'PRÉLUDE',
   'POSTLUDE',
 ];
+
+// Programme : en pratique seulement 2 sections récurrentes.
+const PROGRAMME_PRESETS = ['ÉCOLE DU SABBAT', "CULTE D'ADORATION"];
 
 const field =
   'min-h-[40px] w-full rounded-md border border-border bg-surface px-3 text-sm text-text ' +
@@ -119,7 +123,21 @@ function ItemRow({
           value={item.titre}
           onChange={(e) => updateItem(sectionId, item.id, { titre: e.target.value })}
         />
-        <div className="flex shrink-0 gap-1">
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Couleur du titre (optionnelle) : répercutée sur le PDF. */}
+          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface" title="Couleur du titre">
+            <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: item.color || '#1a1f29' }} />
+            <input
+              type="color"
+              aria-label="Couleur du titre"
+              value={item.color || '#1a1f29'}
+              onChange={(e) => updateItem(sectionId, item.id, { color: e.target.value })}
+              className="absolute inset-0 cursor-pointer opacity-0"
+            />
+          </span>
+          {item.color && (
+            <IconBtn label="Couleur par défaut" onClick={() => updateItem(sectionId, item.id, { color: undefined })}>⟲</IconBtn>
+          )}
           {/* Outils techniques (.pro) : réservés à l'éditeur de TRAME. */}
           {isTrame && libraryReady && (
             <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
@@ -390,7 +408,7 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
       <div className="mt-5">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Ajouter une section</div>
         <div className="flex flex-wrap gap-2">
-          {SECTION_PRESETS.map((label) => (
+          {(isTrame ? SECTION_PRESETS : PROGRAMME_PRESETS).map((label) => (
             <Button key={label} variant="secondary" size="sm" onClick={() => addSection(label)}>+ {label}</Button>
           ))}
           <Button variant="ghost" size="sm" onClick={() => addSection('NOUVELLE SECTION')}>+ Personnalisée</Button>

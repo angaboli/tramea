@@ -19,6 +19,8 @@ export interface TrameItem {
   verset?: string;
   /** Lien (URL) — ex. bande son du prélude ; cliquable dans le PDF. */
   lien?: string;
+  /** Couleur du titre sur le PDF (hex #rrggbb). Absent ⇒ couleur par défaut. */
+  color?: string;
   /**
    * Chant personnalisé / medley : généré en clonant `baseProFile` et en
    * remplaçant le texte des diapos par `slides` (un texte par diapo).

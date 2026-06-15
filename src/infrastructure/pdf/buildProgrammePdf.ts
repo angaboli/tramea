@@ -36,6 +36,15 @@ const X_REM = 446;
 const HEADER_BG = rgb(0.62, 0.8, 0.92); // bleu clair
 const SECTION_BG = rgb(0.91, 0.66, 0.49); // saumon
 const INK = rgb(0.1, 0.12, 0.16);
+
+/** Convertit une couleur hex (#rrggbb) en couleur pdf-lib, ou null si invalide. */
+function hexColor(hex?: string) {
+  if (!hex) return null;
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
 const BORDER = rgb(0.55, 0.58, 0.62);
 
 const ROW_H = 26;
@@ -142,8 +151,14 @@ export async function buildProgrammePdf(
       s = s.slice(0, -1);
     return s + "…";
   };
-  const textL = (s: string, x: number, yy: number, f: PDFFont, size: number) =>
-    page.drawText(s, { x, y: yy, size, font: f, color: INK });
+  const textL = (
+    s: string,
+    x: number,
+    yy: number,
+    f: PDFFont,
+    size: number,
+    color = INK,
+  ) => page.drawText(s, { x, y: yy, size, font: f, color });
   const textC = (
     s: string,
     x1: number,
@@ -234,6 +249,7 @@ export async function buildProgrammePdf(
       baseline,
       bold,
       10,
+      hexColor(item.color) ?? INK,
     );
 
     if (merged) {
