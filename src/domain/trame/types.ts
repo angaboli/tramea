@@ -32,6 +32,8 @@ export interface Section {
   id: string;
   label: string;
   items: TrameItem[];
+  /** Couleur de la bande de section sur le PDF (hex #rrggbb). Absent ⇒ saumon. */
+  color?: string;
 }
 
 /**

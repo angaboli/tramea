@@ -45,6 +45,12 @@ function hexColor(hex?: string) {
   const n = parseInt(m[1], 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
+
+/** Texte lisible (noir ou blanc) selon la luminance d'un fond pdf-lib. */
+function readableInk(bg: { red: number; green: number; blue: number }) {
+  const lum = 0.299 * bg.red + 0.587 * bg.green + 0.114 * bg.blue;
+  return lum > 0.6 ? INK : rgb(1, 1, 1);
+}
 const BORDER = rgb(0.55, 0.58, 0.62);
 
 const ROW_H = 26;
@@ -293,12 +299,13 @@ export async function buildProgrammePdf(
   // Sections + lignes
   for (const section of programme.sections) {
     ensure(SECTION_H + ROW_H);
+    const bandColor = hexColor(section.color) ?? SECTION_BG;
     page.drawRectangle({
       x: M,
       y: y - SECTION_H,
       width: RIGHT - M,
       height: SECTION_H,
-      color: SECTION_BG,
+      color: bandColor,
     });
     page.drawRectangle({
       x: M,
@@ -315,7 +322,7 @@ export async function buildProgrammePdf(
       y: y - SECTION_H / 2 - 4,
       size: 11,
       font: bold,
-      color: INK,
+      color: readableInk(bandColor),
     });
     y -= SECTION_H;
 

@@ -43,6 +43,14 @@ export function renameSection(p: Programme, sectionId: string, label: string): P
   return mapSection(p, sectionId, (s) => ({ ...s, label }));
 }
 
+export function setSectionColor(
+  p: Programme,
+  sectionId: string,
+  color: string | undefined,
+): Programme {
+  return mapSection(p, sectionId, (s) => ({ ...s, color }));
+}
+
 export function removeSection(p: Programme, sectionId: string): Programme {
   return { ...p, sections: p.sections.filter((s) => s.id !== sectionId) };
 }

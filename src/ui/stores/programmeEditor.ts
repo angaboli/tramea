@@ -10,6 +10,7 @@ interface EditorState {
   setMeta: (patch: Partial<Pick<Programme, 'titre' | 'date'>>) => void;
   addSection: (label: string) => void;
   renameSection: (id: string, label: string) => void;
+  setSectionColor: (id: string, color: string | undefined) => void;
   removeSection: (id: string) => void;
   moveSection: (from: number, to: number) => void;
   addItem: (sectionId: string, type: ItemType, titre?: string) => void;
@@ -33,6 +34,8 @@ export const useProgrammeEditor = create<EditorState>()(
       addSection: (label) => set((s) => ({ programme: edit.addSection(s.programme, label) })),
       renameSection: (id, label) =>
         set((s) => ({ programme: edit.renameSection(s.programme, id, label) })),
+      setSectionColor: (id, color) =>
+        set((s) => ({ programme: edit.setSectionColor(s.programme, id, color) })),
       removeSection: (id) => set((s) => ({ programme: edit.removeSection(s.programme, id) })),
       moveSection: (from, to) =>
         set((s) => ({ programme: edit.moveSection(s.programme, from, to) })),

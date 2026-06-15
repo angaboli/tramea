@@ -194,7 +194,7 @@ function SectionCard({
   count: number;
   isTrame: boolean;
 }) {
-  const { renameSection, removeSection, moveSection, addItem } = useProgrammeEditor();
+  const { renameSection, setSectionColor, removeSection, moveSection, addItem } = useProgrammeEditor();
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -203,7 +203,20 @@ function SectionCard({
           value={section.label}
           onChange={(e) => renameSection(section.id, e.target.value)}
         />
-        <div className="flex shrink-0 gap-1">
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Couleur de la bande de section (PDF). */}
+          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border" title="Couleur de la bande" style={{ backgroundColor: section.color || '#e8a87e' }}>
+            <input
+              type="color"
+              aria-label="Couleur de la bande de section"
+              value={section.color || '#e8a87e'}
+              onChange={(e) => setSectionColor(section.id, e.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+            />
+          </span>
+          {section.color && (
+            <IconBtn label="Couleur par défaut" onClick={() => setSectionColor(section.id, undefined)}>⟲</IconBtn>
+          )}
           <IconBtn label="Monter la section" onClick={() => moveSection(index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre la section" onClick={() => moveSection(index, index + 1)} disabled={index === count - 1}>↓</IconBtn>
           <IconBtn label="Supprimer la section" onClick={() => removeSection(section.id)}>✕</IconBtn>
