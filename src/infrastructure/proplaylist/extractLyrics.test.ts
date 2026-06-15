@@ -44,4 +44,11 @@ describe('extractLyrics', () => {
   it('retourne [] si aucun RTF', () => {
     expect(extractLyrics(bytes('aucun texte rtf ici'))).toEqual([]);
   });
+
+  it('retire les lignes décoratives (séparateurs) et les lignes vides', () => {
+    const pro = bytes(
+      "{\\rtf1 *...*\\u9679?...*\\par La voix de Christ\\par\\par Il est temps}",
+    );
+    expect(extractLyrics(pro)).toEqual(['La voix de Christ\nIl est temps']);
+  });
 });

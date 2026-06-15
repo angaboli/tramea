@@ -162,13 +162,27 @@ function rtfBlocks(s: string): string[] {
 }
 
 /**
- * Paroles d'un `.pro` : un bloc de texte par diapo, dans l'ordre, en retirant
- * les doublons consécutifs (diapos répétées).
+ * Ne garde que les vraies lignes de paroles : on retire les lignes purement
+ * décoratives (séparateurs ProPresenter type « *…*●…* », « „„ ») et les lignes
+ * vides, pour un texte propre, lisible comme un poème.
+ */
+function keepLyricLines(text: string): string {
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => /\p{L}/u.test(l)) // au moins une lettre = vraie parole
+    .join('\n');
+}
+
+/**
+ * Paroles d'un `.pro` : un bloc de texte par diapo, dans l'ordre, nettoyé des
+ * lignes décoratives et des doublons consécutifs (diapos répétées).
  */
 export function extractLyrics(proBytes: Uint8Array): string[] {
   const s = latin1(proBytes);
   const blocks = rtfBlocks(s)
     .map(rtfToText)
+    .map(keepLyricLines)
     .filter((t) => t.length > 0);
   const out: string[] = [];
   for (const b of blocks) if (out[out.length - 1] !== b) out.push(b);
