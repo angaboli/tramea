@@ -145,11 +145,11 @@ function ItemRow({
           {isTrame && isSong && libraryReady && (
             <button
               type="button"
-              title="Chant personnalisé / medley"
+              title="Créer un chant depuis l'app (sert aussi à faire un medley)"
               onClick={() => setMedley(true)}
               className="flex h-9 items-center rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
             >
-              Medley
+              Créer le chant
             </button>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
@@ -409,21 +409,23 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
       {isTrame && (
         <details className="mb-5 rounded-lg border border-border bg-surface-2 px-4 py-3">
           <summary className="cursor-pointer text-sm font-semibold text-text-secondary">
-            Comment créer un medley ?
+            Comment créer un chant (ou un medley) ?
           </summary>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-text-secondary">
             <li>Connectez votre dossier ProPresenter (bouton ci-dessus).</li>
             <li>Ajoutez une ligne <strong>+ Chant</strong> dans une section.</li>
-            <li>Sur la ligne du chant, cliquez le bouton <strong>Medley</strong>
+            <li>Sur la ligne du chant, cliquez <strong>Créer le chant</strong>
               (visible seulement sur un chant, bibliothèque connectée).</li>
-            <li>Choisissez le <strong>chant de base</strong> à cloner, le
-              <strong> titre</strong>, puis saisissez le texte <strong>diapo par
+            <li>Choisissez un <strong>chant modèle</strong> (mise en forme & fond),
+              le <strong>titre</strong>, puis saisissez le texte <strong>diapo par
               diapo</strong> (un bloc = une diapo).</li>
-            <li>Exportez en <strong>.proPlaylist</strong> : le medley est inclus.</li>
+            <li>Exportez en <strong>.proPlaylist</strong> : le chant est inclus.</li>
           </ol>
           <p className="mt-2 text-xs text-text-muted">
-            Astuce : choisissez un chant de base avec assez de diapos (le surplus
-            de textes est ignoré). Doc complète : <code>docs/medley.md</code>.
+            Un <strong>medley</strong> se crée exactement de la même façon : il
+            suffit de mettre les strophes des différents chants à la suite.
+            Astuce : prenez un chant modèle avec assez de diapos (le surplus de
+            textes est ignoré). Doc : <code>docs/medley.md</code>.
           </p>
         </details>
       )}

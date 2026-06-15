@@ -1,9 +1,10 @@
-# Créer un medley (chant personnalisé) dans Tramea
+# Créer un chant (et un medley) dans Tramea
 
-Un **medley** = un chant ProPresenter dont on choisit/réécrit le texte des diapos
-(ex. strophe 1+2 d'un chant, puis strophe 3+4 d'un autre). Tramea le fabrique en
-**clonant un `.pro` existant** de ta bibliothèque et en remplaçant le texte de
-ses diapos — la structure ProPresenter reste donc 100 % valide.
+Dans Tramea, **créer un nouveau chant** et **créer un medley**, c'est la même
+chose : on part d'un **chant modèle** (`.pro` existant de ta bibliothèque, pour
+une mise en forme et un fond valides) et on **réécrit le texte des diapos**. Un
+medley n'est donc qu'un chant dont on met, à la suite, les strophes de plusieurs
+chants. Pas de cas particulier : un seul mécanisme.
 
 ## Pré-requis
 
@@ -16,7 +17,7 @@ ses diapos — la structure ProPresenter reste donc 100 % valide.
 ## Étapes
 
 1. Ajoute une ligne **+ Chant** dans une section.
-2. Sur la ligne du chant, clique le bouton **Medley** (chant personnalisé).
+2. Sur la ligne du chant, clique le bouton **Créer le chant**.
    - Ce bouton n'apparaît **que** sur une ligne de type *Chant*, en mode trame,
      bibliothèque connectée.
 3. Dans la fenêtre medley :
@@ -41,7 +42,7 @@ ses diapos — la structure ProPresenter reste donc 100 % valide.
 
 ## Dépannage
 
-- **Pas de bouton Medley** → tu es en mode *programme* (passe en *trame*) ou la
+- **Pas de bouton « Créer le chant »** → tu es en mode *programme* (passe en *trame*) ou la
   bibliothèque n'est pas connectée (« Connecter le dossier »).
 - **Medley vide à l'import dans ProPresenter** → problème connu en cours de
   correction : envoie le `.pro` de base utilisé pour qu'on cartographie la
