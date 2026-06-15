@@ -17,6 +17,20 @@ describe('rtfToText', () => {
     // \'e9 = é en cp1252/latin-1
     expect(rtfToText("{\\rtf1 caf\\'e9}")).toBe('café');
   });
+
+  it('mappe les octets hauts Windows-1252 (guillemet courbe)', () => {
+    // \'92 = apostrophe courbe ’ en cp1252 (illisible si décodé en latin-1)
+    expect(rtfToText("{\\rtf1 L\\'92amour}")).toBe('L’amour');
+  });
+
+  it('saute les octets de repli après \\u selon \\uc', () => {
+    // \uc1 : 1 octet de repli (« ? ») à ignorer après chaque \u.
+    expect(rtfToText('{\\rtf1\\uc1 c\\u339?ur}')).toBe('cœur');
+  });
+
+  it('retire les octets de contrôle binaires résiduels', () => {
+    expect(rtfToText('{\\rtf1 Gloire\\u0\x07 \x00à Dieu}')).toBe('Gloire à Dieu');
+  });
 });
 
 describe('extractLyrics', () => {

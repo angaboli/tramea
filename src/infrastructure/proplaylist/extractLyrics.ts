@@ -1,7 +1,8 @@
 /**
  * Extraction des paroles d'une présentation `.pro` (fichier local de
  * l'utilisateur). Les diapos ProPresenter stockent leur texte en RTF ; on
- * extrait chaque bloc RTF et on le convertit en texte brut. Pur et testable.
+ * extrait chaque bloc RTF et on le convertit en texte brut PROPRE. Pur et
+ * testable.
  */
 
 function latin1(bytes: Uint8Array): string {
@@ -10,26 +11,123 @@ function latin1(bytes: Uint8Array): string {
   return s;
 }
 
-/** Convertit un fragment RTF en texte brut (lignes conservées). */
+// Octets hauts Windows-1252 (0x80–0x9F) qui ne correspondent PAS à Latin-1 :
+// guillemets courbes, tirets, points de suspension… Sans cette table, ils
+// sortaient en caractères illisibles.
+const WIN1252: Record<number, string> = {
+  0x80: '€', 0x82: '‚', 0x83: 'ƒ', 0x84: '„', 0x85: '…', 0x86: '†', 0x87: '‡',
+  0x88: 'ˆ', 0x89: '‰', 0x8a: 'Š', 0x8b: '‹', 0x8c: 'Œ', 0x8e: 'Ž',
+  0x91: '‘', 0x92: '’', 0x93: '“', 0x94: '”', 0x95: '•',
+  0x96: '–', 0x97: '—', 0x98: '˜', 0x99: '™', 0x9a: 'š', 0x9b: '›', 0x9c: 'œ',
+  0x9e: 'ž', 0x9f: 'Ÿ',
+};
+
+function decodeByte(code: number): string {
+  return WIN1252[code] ?? String.fromCharCode(code);
+}
+
+// Octets de contrôle binaires résiduels (issus du protobuf autour du RTF) +
+// caractère de remplacement Unicode : à supprimer du texte final.
+// Construit par codes pour ne pas écrire d'octets de contrôle dans le source.
+const CTRL = new RegExp(
+  '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F\\uFFFD]',
+  'g',
+);
+
+/**
+ * Retire les groupes RTF « ignorables » (tables d'en-tête et destinations
+ * `{\*\...}`) en comptant les accolades — y compris imbriquées. Leur contenu
+ * (noms de polices, couleurs, styles) n'est pas du texte affiché.
+ */
+function stripIgnorableGroups(s: string): string {
+  const IGNORE =
+    /^\\(?:\*|fonttbl|colortbl|stylesheet|expandedcolortbl|listtable|listoverridetable|rsidtbl|generator|info|pgdsctbl|themedata|datastore)\b/;
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '{' && IGNORE.test(s.slice(i + 1, i + 24))) {
+      // Saute le groupe entier (accolades équilibrées, échappées ignorées).
+      let depth = 0;
+      for (; i < s.length; i++) {
+        const c = s[i];
+        if (c === '\\') i++;
+        else if (c === '{') depth++;
+        else if (c === '}' && --depth === 0) break;
+      }
+      continue;
+    }
+    out += s[i];
+  }
+  return out;
+}
+
+/** Convertit un fragment RTF en texte brut PROPRE (lignes conservées). */
 export function rtfToText(rtf: string): string {
-  let s = rtf;
-  // Retirer les tables d'en-tête (fonttbl/colortbl/…) et groupes ignorables.
-  s = s.replace(/\{\\(?:\*\\)?(?:fonttbl|colortbl|stylesheet|expandedcolortbl|listtable|listoverridetable)\b[^{}]*\}/g, '');
-  // Échappements unicode \uN et hexadécimaux \'xx.
-  s = s.replace(/\\u(-?\d+)\s?\??/g, (_m, n) => String.fromCharCode(((Number(n) % 65536) + 65536) % 65536));
-  s = s.replace(/\\'([0-9a-fA-F]{2})/g, (_m, h) => String.fromCharCode(parseInt(h, 16)));
-  // Sauts de ligne / paragraphes.
-  s = s.replace(/\\par[d]?\b/g, '\n').replace(/\\line\b/g, '\n');
-  // Accolades échappées.
-  s = s.replace(/\\([{}\\])/g, '$1');
-  // Mots de contrôle restants.
-  s = s.replace(/\\[a-zA-Z]+-?\d*\s?/g, '');
-  // Accolades de groupe.
-  s = s.replace(/[{}]/g, '');
-  // Nettoyage des espaces, en gardant les retours à la ligne.
-  return s
+  const s = stripIgnorableGroups(rtf);
+  let out = '';
+  let uc = 1; // nb de caractères de repli à sauter après un \uN (directive \ucN)
+  let skip = 0;
+
+  for (let i = 0; i < s.length; ) {
+    const c = s[i];
+
+    if (c === '\\') {
+      const next = s[i + 1];
+      // Échappement hexadécimal \'xx (un octet dans la code page).
+      if (next === "'") {
+        const code = parseInt(s.substr(i + 2, 2), 16);
+        if (skip > 0) skip--;
+        else if (!Number.isNaN(code)) out += decodeByte(code);
+        i += 4;
+        continue;
+      }
+      // Caractères littéraux échappés \{ \} \\
+      if (next === '\\' || next === '{' || next === '}') {
+        if (skip > 0) skip--;
+        else out += next;
+        i += 2;
+        continue;
+      }
+      // Mot de contrôle : \word, paramètre optionnel, espace avalé.
+      const m = /^\\([a-zA-Z]+)(-?\d+)? ?/.exec(s.slice(i));
+      if (m) {
+        const [tok, word, param] = m;
+        if (word === 'u') {
+          const code = ((Number(param) % 65536) + 65536) % 65536;
+          out += String.fromCharCode(code);
+          skip = uc; // les uc octets de repli suivants sont à ignorer
+        } else if (word === 'uc') {
+          uc = Number(param ?? '1');
+        } else if (word === 'par' || word === 'pard' || word === 'line') {
+          out += '\n';
+          skip = 0;
+        } else if (word === 'tab') {
+          out += ' ';
+        }
+        // Tout autre mot de contrôle (mise en forme) est ignoré.
+        i += tok.length;
+        continue;
+      }
+      i++; // antislash isolé
+      continue;
+    }
+
+    if (c === '{' || c === '}' || c === '\r') {
+      i++;
+      continue;
+    }
+    if (skip > 0 && c !== '\n') {
+      skip--;
+      i++;
+      continue;
+    }
+    out += c;
+    i++;
+  }
+
+  // Nettoyage final : retire les octets de contrôle, collapse les espaces.
+  return out
     .split('\n')
-    .map((l) => l.replace(/[ \t]+/g, ' ').trim())
+    .map((l) => l.replace(CTRL, '').replace(/[ \t]+/g, ' ').trim())
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();

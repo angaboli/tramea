@@ -59,11 +59,13 @@ function ItemRow({
   item,
   index,
   count,
+  isTrame,
 }: {
   sectionId: string;
   item: TrameItem;
   index: number;
   count: number;
+  isTrame: boolean;
 }) {
   const { updateItem, removeItem, moveItem } = useProgrammeEditor();
   const libraryReady = useLibrary((s) => s.ready);
@@ -118,10 +120,11 @@ function ItemRow({
           onChange={(e) => updateItem(sectionId, item.id, { titre: e.target.value })}
         />
         <div className="flex shrink-0 gap-1">
-          {libraryReady && (
+          {/* Outils techniques (.pro) : réservés à l'éditeur de TRAME. */}
+          {isTrame && libraryReady && (
             <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
           )}
-          {isSong && libraryReady && (
+          {isTrame && isSong && libraryReady && (
             <IconBtn label="Chant personnalisé / medley" onClick={() => setMedley(true)}>🎚</IconBtn>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
@@ -139,7 +142,9 @@ function ItemRow({
             <input className={field} placeholder="Verset" value={item.verset ?? ''} onChange={(e) => updateItem(sectionId, item.id, { verset: e.target.value })} />
             <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
           </div>
-          <input className={field} placeholder="Fichier .pro (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+          {isTrame && (
+            <input className={field} placeholder="Fichier .pro (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+          )}
         </div>
       ) : (
         <div className="mt-2 flex flex-col gap-2">
@@ -150,15 +155,27 @@ function ItemRow({
             <input className={field} placeholder="Lien (URL, téléchargeable)" value={item.lien ?? ''} onChange={(e) => updateItem(sectionId, item.id, { lien: e.target.value })} />
           </div>
           {/* Lien vers une présentation .pro (ex. Annonces récurrentes, chant du
-              service de fidélité) — incluse dans le .proPlaylist. */}
-          <input className={field} placeholder="Fichier .pro lié (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+              service de fidélité) — incluse dans le .proPlaylist. TRAME only. */}
+          {isTrame && (
+            <input className={field} placeholder="Fichier .pro lié (via 📚)" value={item.proFile ?? ''} onChange={(e) => updateItem(sectionId, item.id, { proFile: e.target.value })} />
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function SectionCard({ section, index, count }: { section: Section; index: number; count: number }) {
+function SectionCard({
+  section,
+  index,
+  count,
+  isTrame,
+}: {
+  section: Section;
+  index: number;
+  count: number;
+  isTrame: boolean;
+}) {
   const { renameSection, removeSection, moveSection, addItem } = useProgrammeEditor();
   return (
     <Card className="flex flex-col gap-3">
@@ -177,7 +194,7 @@ function SectionCard({ section, index, count }: { section: Section; index: numbe
 
       <div className="flex flex-col gap-2">
         {section.items.map((it, i) => (
-          <ItemRow key={it.id} sectionId={section.id} item={it} index={i} count={section.items.length} />
+          <ItemRow key={it.id} sectionId={section.id} item={it} index={i} count={section.items.length} isTrame={isTrame} />
         ))}
         {section.items.length === 0 && (
           <p className="py-2 text-center text-sm text-text-muted">Section vide.</p>
@@ -366,7 +383,7 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
 
       <div className="flex flex-col gap-4">
         {programme.sections.map((s, i) => (
-          <SectionCard key={s.id} section={s} index={i} count={programme.sections.length} />
+          <SectionCard key={s.id} section={s} index={i} count={programme.sections.length} isTrame={isTrame} />
         ))}
       </div>
 
