@@ -253,7 +253,9 @@ export async function buildProgrammePdf(
     );
 
     if (merged) {
-      const content = [note || off, verset].filter(Boolean).join("  ·  ");
+      // Ligne fusionnée (moment sans réf/tonalité) : on affiche TOUT ce qui est
+      // saisi (officiant, note, verset) au lieu d'en masquer.
+      const content = [off, note, verset].filter(Boolean).join("  ·  ");
       // si un lien est présent, on laisse de la place à droite
       if (content) textC(content, X_REF, lien ? RIGHT - 60 : RIGHT, baseline, font, 10);
     } else {
