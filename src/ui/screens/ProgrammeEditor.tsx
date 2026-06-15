@@ -34,6 +34,18 @@ const field =
   'min-h-[40px] w-full rounded-md border border-border bg-surface px-3 text-sm text-text ' +
   'placeholder:text-text-muted focus-visible:shadow-focus focus-visible:outline-none focus-visible:border-primary';
 
+/** Icône « notes de musique » pour Créer un chant / medley. */
+function SongIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 18V6l9-2.2v10" stroke="#16216e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 9.2l9-2.2" stroke="#16216e" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="6.4" cy="18" r="3.1" fill="#39bdf8" stroke="#16216e" strokeWidth="2" />
+      <circle cx="15.4" cy="15.8" r="3.1" fill="#ffe14d" stroke="#16216e" strokeWidth="2" />
+    </svg>
+  );
+}
+
 function IconBtn({
   label,
   onClick,
@@ -147,8 +159,9 @@ function ItemRow({
               type="button"
               title="Créer un chant depuis l'app (sert aussi à faire un medley)"
               onClick={() => setMedley(true)}
-              className="flex h-9 items-center rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
+              className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
             >
+              <SongIcon />
               Créer le chant
             </button>
           )}
