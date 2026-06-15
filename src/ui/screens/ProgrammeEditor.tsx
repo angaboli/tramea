@@ -399,6 +399,28 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
         </div>
       )}
 
+      {isTrame && (
+        <details className="mb-5 rounded-lg border border-border bg-surface-2 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-semibold text-text-secondary">
+            🎚 Comment créer un medley ?
+          </summary>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-text-secondary">
+            <li>Connectez votre dossier ProPresenter (bouton ci-dessus).</li>
+            <li>Ajoutez une ligne <strong>+ Chant</strong> dans une section.</li>
+            <li>Sur la ligne du chant, cliquez l'icône <strong>🎚</strong> (visible
+              seulement sur un chant, bibliothèque connectée).</li>
+            <li>Choisissez le <strong>chant de base</strong> à cloner, le
+              <strong> titre</strong>, puis saisissez le texte <strong>diapo par
+              diapo</strong> (un bloc = une diapo).</li>
+            <li>Exportez en <strong>.proPlaylist</strong> : le medley est inclus.</li>
+          </ol>
+          <p className="mt-2 text-xs text-text-muted">
+            Astuce : choisissez un chant de base avec assez de diapos (le surplus
+            de textes est ignoré). Doc complète : <code>docs/medley.md</code>.
+          </p>
+        </details>
+      )}
+
       <Card className="mb-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
