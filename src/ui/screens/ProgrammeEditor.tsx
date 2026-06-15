@@ -143,7 +143,14 @@ function ItemRow({
             <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
           )}
           {isTrame && isSong && libraryReady && (
-            <IconBtn label="Chant personnalisé / medley" onClick={() => setMedley(true)}>🎚</IconBtn>
+            <button
+              type="button"
+              title="Chant personnalisé / medley"
+              onClick={() => setMedley(true)}
+              className="flex h-9 items-center rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
+            >
+              Medley
+            </button>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre" onClick={() => moveItem(sectionId, index, index + 1)} disabled={index === count - 1}>↓</IconBtn>
@@ -402,13 +409,13 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
       {isTrame && (
         <details className="mb-5 rounded-lg border border-border bg-surface-2 px-4 py-3">
           <summary className="cursor-pointer text-sm font-semibold text-text-secondary">
-            🎚 Comment créer un medley ?
+            Comment créer un medley ?
           </summary>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-text-secondary">
             <li>Connectez votre dossier ProPresenter (bouton ci-dessus).</li>
             <li>Ajoutez une ligne <strong>+ Chant</strong> dans une section.</li>
-            <li>Sur la ligne du chant, cliquez l'icône <strong>🎚</strong> (visible
-              seulement sur un chant, bibliothèque connectée).</li>
+            <li>Sur la ligne du chant, cliquez le bouton <strong>Medley</strong>
+              (visible seulement sur un chant, bibliothèque connectée).</li>
             <li>Choisissez le <strong>chant de base</strong> à cloner, le
               <strong> titre</strong>, puis saisissez le texte <strong>diapo par
               diapo</strong> (un bloc = une diapo).</li>

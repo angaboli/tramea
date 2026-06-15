@@ -16,8 +16,8 @@ ses diapos — la structure ProPresenter reste donc 100 % valide.
 ## Étapes
 
 1. Ajoute une ligne **+ Chant** dans une section.
-2. Sur la ligne du chant, clique l'icône **🎚 (Chant personnalisé / medley)**.
-   - Cette icône n'apparaît **que** sur une ligne de type *Chant*, en mode trame,
+2. Sur la ligne du chant, clique le bouton **Medley** (chant personnalisé).
+   - Ce bouton n'apparaît **que** sur une ligne de type *Chant*, en mode trame,
      bibliothèque connectée.
 3. Dans la fenêtre medley :
    - **Titre** du medley (nom de la présentation générée).
@@ -41,7 +41,7 @@ ses diapos — la structure ProPresenter reste donc 100 % valide.
 
 ## Dépannage
 
-- **Pas de bouton 🎚** → tu es en mode *programme* (passe en *trame*) ou la
+- **Pas de bouton Medley** → tu es en mode *programme* (passe en *trame*) ou la
   bibliothèque n'est pas connectée (« Connecter le dossier »).
 - **Medley vide à l'import dans ProPresenter** → problème connu en cours de
   correction : envoie le `.pro` de base utilisé pour qu'on cartographie la
