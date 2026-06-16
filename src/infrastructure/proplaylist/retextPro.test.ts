@@ -49,7 +49,8 @@ describe('retextPro', () => {
     ...encStrField(3, 'Ancien titre'),
     ...encBytesField(13, slide('{\\rtf0\\cb3}')),
     ...encBytesField(13, slide('{\\rtf0\\cb3}')),
-    ...encStrField(14, 'Ancien titre'),
+    // f14 est un MESSAGE { f3: nom } dans le vrai format ProPresenter.
+    ...encBytesField(14, encStrField(3, 'Ancien titre')),
   ]);
 
   it('remplace le titre et le texte des diapos', () => {
@@ -62,7 +63,8 @@ describe('retextPro', () => {
 
     const top = walk(out);
     expect(decodeUtf8(u(get(top, 3)))).toBe('Medley du jour');
-    expect(decodeUtf8(u(get(top, 14)))).toBe('Medley du jour');
+    // f14 reste un message { f3: nom } : on vérifie le f3 interne.
+    expect(decodeUtf8(u(get(walk(u(get(top, 14))), 3)))).toBe('Medley du jour');
 
     const rtfOf = (sl: Uint8Array) => {
       let b = sl;

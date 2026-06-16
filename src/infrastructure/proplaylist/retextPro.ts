@@ -123,9 +123,21 @@ export function retextPro(
       );
       return encBytesField(13, slide);
     }
-    // Titre de présentation (f3 et f14 portent le nom)
-    if ((f.field === 3 || f.field === 14) && f.wire === 2) {
-      return encStrField(f.field, song.title);
+    // Nom de la présentation : f3 racine est une CHAÎNE (le nom) → on remplace.
+    if (f.field === 3 && f.wire === 2) {
+      return encStrField(3, song.title);
+    }
+    // f14 est un MESSAGE { f3: nom }, PAS une chaîne. L'écraser par une chaîne
+    // nue casse la structure → ProPresenter charge une présentation 0×0 / vide.
+    // On ne remplace donc QUE le f3 interne, en préservant le reste de f14.
+    if (f.field === 14 && f.wire === 2) {
+      const titleBytes = new TextEncoder().encode(song.title);
+      try {
+        return encBytesField(14, setAtPath(f.value as Uint8Array, [3], () => titleBytes));
+      } catch {
+        // f14 inattendu (non parsable) : on le laisse intact plutôt que corrompre.
+        return reencode(f);
+      }
     }
     return reencode(f);
   });
