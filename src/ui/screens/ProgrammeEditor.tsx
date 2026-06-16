@@ -38,10 +38,10 @@ const field =
 function SongIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 18V6l9-2.2v10" stroke="#16216e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 9.2l9-2.2" stroke="#16216e" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="6.4" cy="18" r="3.1" fill="#39bdf8" stroke="#16216e" strokeWidth="2" />
-      <circle cx="15.4" cy="15.8" r="3.1" fill="#ffe14d" stroke="#16216e" strokeWidth="2" />
+      <path d="M9 18V6l9-2.2v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 9.2l9-2.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="6.4" cy="18" r="3.1" fill="var(--primary)" stroke="currentColor" strokeWidth="2" />
+      <circle cx="15.4" cy="15.8" r="3.1" fill="var(--accent)" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }
