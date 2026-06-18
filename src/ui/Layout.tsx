@@ -21,7 +21,7 @@ function Logo() {
         </svg>
       </div>
       <div className="leading-tight">
-        <div className="text-base font-bold">Tramea</div>
+        <div className="font-display text-lg font-semibold tracking-tight">Tramea</div>
         <div className="text-xs text-text-muted">Trames de culte</div>
       </div>
     </Link>

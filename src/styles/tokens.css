@@ -33,6 +33,9 @@
 
   /* Espacement (base 4px) */
   --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--sp-10:40px;
+
+  /* Police d'affichage (titres) — serif chaleureuse, éditoriale. */
+  --font-display:'Fraunces','Hanken Grotesk',Georgia,serif;
 }
 
 [data-theme="dark"] {
@@ -52,3 +55,9 @@
 
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+/* Classe utilitaire : apparition douce vers le haut (délai inline pour stagger). */
+.fade-up{animation:fadeUp .55s cubic-bezier(.22,.61,.36,1) both;}
+.font-display{font-family:var(--font-display);font-optical-sizing:auto;}
+@media (prefers-reduced-motion: reduce){.fade-up{animation:none;}}
