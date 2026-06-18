@@ -105,14 +105,16 @@ export function CreatorDashboard() {
           disabled={!canCreateProgramme(session)}
           onClick={newProgramme}
         />
-        <ActionCard
-          title="Nouvelle trame"
-          desc="Construire la séquence ProPresenter. Export .proPlaylist."
-          cta="Créer une trame"
-          tone="accent"
-          disabled={!canCreateTrame(session)}
-          onClick={() => setTrameDialog(true)}
-        />
+        {/* La trame (technique) n'est visible que pour les rôles avancé/admin. */}
+        {canCreateTrame(session) && (
+          <ActionCard
+            title="Nouvelle trame"
+            desc="Construire la séquence ProPresenter. Export .proPlaylist."
+            cta="Créer une trame"
+            tone="accent"
+            onClick={() => setTrameDialog(true)}
+          />
+        )}
         <ActionCard
           title="Importer (PDF / MD)"
           desc="Partir d'un programme existant : PDF ou Markdown, mappé automatiquement."
