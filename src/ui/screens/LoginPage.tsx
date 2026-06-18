@@ -5,7 +5,7 @@ import { Input } from '../components/Input';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSession } from '../stores/session';
 import { isRealAuth } from '../../infrastructure/auth/authPort';
-import { authErrorMessage, isInvalidCredentials, isUserAlreadyExists } from '../lib/authErrorMessage';
+import { authErrorMessage } from '../lib/authErrorMessage';
 
 function Logo() {
   return (
@@ -46,28 +46,18 @@ export function LoginPage() {
     }
   }
 
-  // Connexion par mot de passe « intelligente » : on tente la connexion ; si le
-  // compte n'existe pas encore, on le crée automatiquement (puis attente admin).
-  async function passwordAuth() {
-    try {
-      await signInPassword(email, password);
-    } catch (e1) {
-      if (isInvalidCredentials(e1)) {
-        // Compte peut-être inexistant → on tente de le créer.
-        try {
-          await signUpPassword(email, password);
-        } catch (e2) {
-          // Le compte existait : c'était donc un mot de passe incorrect.
-          if (isUserAlreadyExists(e2)) throw new Error('Mot de passe incorrect.');
-          throw e2;
-        }
-      } else throw e1;
-    }
-  }
-
-  async function onSubmit(e: FormEvent) {
+  // Actions explicites — chacune fait UNE chose claire (pas d'effet caché).
+  function onSubmit(e: FormEvent) {
     e.preventDefault();
-    void run(() => (mode === 'password' ? passwordAuth() : sendLink(email)));
+    // En mode mot de passe, le bouton principal = SE CONNECTER (sans email).
+    void run(() => (mode === 'password' ? signInPassword(email, password) : sendLink(email)));
+  }
+  function onCreateAccount() {
+    if (password.length < 6) {
+      setError('Choisissez un mot de passe d’au moins 6 caractères.');
+      return;
+    }
+    void run(() => signUpPassword(email, password));
   }
 
   return (
@@ -92,8 +82,8 @@ export function LoginPage() {
                   <h2 className="text-lg font-bold">Connexion</h2>
                   <p className="mt-1 text-sm text-text-secondary">
                     {mode === 'password'
-                      ? 'Connexion par mot de passe (immédiate).'
-                      : 'Recevez un lien magique par email.'}{' '}
+                      ? 'Entrez votre email et votre mot de passe.'
+                      : 'Recevez un lien de connexion par email.'}{' '}
                     L'accès est validé par un administrateur.
                   </p>
                 </div>
@@ -118,22 +108,36 @@ export function LoginPage() {
                 )}
                 <Button type="submit" full disabled={busy}>
                   {busy
-                    ? 'Connexion…'
+                    ? 'Veuillez patienter…'
                     : mode === 'password'
-                      ? 'Se connecter / créer mon compte'
-                      : 'Recevoir le lien magique'}
+                      ? 'Se connecter'
+                      : 'Recevoir un lien de connexion'}
                 </Button>
+
                 {mode === 'password' && (
-                  <p className="text-center text-xs text-text-muted">
-                    Première fois ? Votre compte est créé automatiquement, puis
-                    activé par un administrateur.
-                  </p>
+                  <>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      full
+                      disabled={busy}
+                      onClick={onCreateAccount}
+                    >
+                      Créer un compte
+                    </Button>
+                    <p className="text-center text-xs text-text-muted">
+                      Première fois ? Créez votre compte, puis attendez l’activation
+                      par un administrateur.
+                    </p>
+                  </>
                 )}
+
                 {error && (
                   <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
                     {error}
                   </p>
                 )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -143,7 +147,7 @@ export function LoginPage() {
                   className="text-center text-sm font-semibold text-primary hover:underline"
                 >
                   {mode === 'password'
-                    ? 'Recevoir un lien magique à la place'
+                    ? 'Recevoir un lien par email à la place'
                     : 'Se connecter par mot de passe'}
                 </button>
               </form>
