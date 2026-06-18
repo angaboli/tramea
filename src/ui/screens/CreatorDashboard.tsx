@@ -10,6 +10,7 @@ import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { countSongs } from '../../domain/trame/programme';
 import { duplicateProgramme } from '../../domain/trame/duplicate';
+import { formatFrDate } from '../../domain/trame/formatDate';
 import type { Programme } from '../../domain/trame/types';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 
@@ -160,7 +161,7 @@ export function CreatorDashboard() {
                   <span className="truncate">
                     <span className="font-semibold">{rec.programme.titre || 'Sans titre'}</span>
                     <span className="ml-2 text-sm text-text-muted">
-                      {rec.programme.date} · {countSongs(rec.programme)} chant(s)
+                      {formatFrDate(rec.programme.date)} · {countSongs(rec.programme)} chant(s)
                     </span>
                   </span>
                 </button>

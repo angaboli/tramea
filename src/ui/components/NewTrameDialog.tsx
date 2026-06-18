@@ -5,6 +5,7 @@ import { Badge } from './Badge';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { searchProgrammes } from '../../domain/trame/searchProgrammes';
+import { formatFrDate } from '../../domain/trame/formatDate';
 import { readProgramFile } from '../../infrastructure/import/readProgramFile';
 import type { Programme } from '../../domain/trame/types';
 
@@ -126,7 +127,7 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
                       ].join(' ')}
                     >
                       <span className="truncate text-sm font-medium">{p.titre || 'Sans titre'}</span>
-                      <Badge tone={active ? 'primary' : 'neutral'}>{p.date}</Badge>
+                      <Badge tone={active ? 'primary' : 'neutral'}>{formatFrDate(p.date)}</Badge>
                     </button>
                   </li>
                 );

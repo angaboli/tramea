@@ -18,6 +18,7 @@ import {
 } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Programme, TrameItem } from "../../domain/trame/types";
+import { formatFrDate } from "../../domain/trame/formatDate";
 import { sanitizeWinAnsi } from "./winAnsi";
 
 const W = 595.28; // A4
@@ -111,26 +112,6 @@ async function loadLogo(doc: PDFDocument): Promise<PDFImage | null> {
     }
   }
   return null;
-}
-
-const MONTHS = [
-  "janvier",
-  "février",
-  "mars",
-  "avril",
-  "mai",
-  "juin",
-  "juillet",
-  "août",
-  "septembre",
-  "octobre",
-  "novembre",
-  "décembre",
-];
-function frDate(iso: string): string {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return iso;
-  return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1] ?? ""} ${m[1]}`.trim();
 }
 
 export interface PdfOptions {
@@ -285,7 +266,7 @@ export async function buildProgrammePdf(
   }
 
   // ── Bandeau bleu (titre + date, sans logo ni nom d'église) ───────────────────
-  const dateTxt = frDate(programme.date);
+  const dateTxt = formatFrDate(programme.date);
   const t = programme.titre?.trim() || "";
   const occasion = !t ? dateTxt : t.includes(dateTxt) ? t : `${t} ${dateTxt}`;
   page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: HEADER_BG });
