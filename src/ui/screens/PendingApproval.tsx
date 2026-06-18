@@ -5,6 +5,21 @@ import { useSession } from '../stores/session';
 
 export function PendingApproval() {
   const { session, signOut } = useSession();
+
+  // Message adapté à la raison réelle du blocage.
+  const suspended = session?.status === 'suspended';
+  const approvedNoRole = session?.status === 'approved' && !session?.role;
+  const title = suspended
+    ? 'Compte suspendu'
+    : approvedNoRole
+      ? 'Rôle non attribué'
+      : "Accès en attente d'approbation";
+  const detail = suspended
+    ? 'Votre compte a été suspendu. Contactez un administrateur pour le réactiver.'
+    : approvedNoRole
+      ? 'Votre compte est approuvé mais aucun rôle ne lui est encore attribué. Un administrateur doit vous donner un rôle (basique, avancé ou admin).'
+      : 'Votre demande a bien été reçue. Un administrateur doit valider votre accès avant que vous puissiez utiliser Tramea.';
+
   return (
     <div className="flex min-h-screen flex-col bg-bg text-text">
       <div className="flex justify-end p-4">
@@ -19,17 +34,11 @@ export function PendingApproval() {
                 <path d="M12 7v5l3 2" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold">Accès en attente d'approbation</h1>
-            <p className="mt-2 text-sm text-text-secondary">
-              Votre demande de connexion
-              {session?.email ? (
-                <>
-                  {' '}pour <span className="font-semibold text-text">{session.email}</span>
-                </>
-              ) : null}{' '}
-              a bien été reçue. Un administrateur doit valider votre accès avant que
-              vous puissiez utiliser Tramea.
-            </p>
+            <h1 className="text-xl font-bold">{title}</h1>
+            {session?.email && (
+              <p className="mt-1 text-sm font-semibold text-text">{session.email}</p>
+            )}
+            <p className="mt-2 text-sm text-text-secondary">{detail}</p>
             <Button variant="ghost" full className="mt-6" onClick={() => signOut()}>
               Se déconnecter
             </Button>

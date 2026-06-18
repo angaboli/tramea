@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useSession } from './stores/session';
-import { hasAccess, isPending } from '../domain/auth/access';
+import { hasAccess } from '../domain/auth/access';
 import { LoginPage } from './screens/LoginPage';
 import { PendingApproval } from './screens/PendingApproval';
 
@@ -30,6 +30,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (hasAccess(session)) return <>{children}</>;
-  if (isPending(session)) return <PendingApproval />;
+  // Connecté mais pas (encore) autorisé — pending, approuvé sans rôle, suspendu… :
+  // on montre l'écran d'attente, JAMAIS la page de login (sinon l'utilisateur a
+  // l'impression que rien ne se passe alors qu'il est bien authentifié).
+  if (session) return <PendingApproval />;
   return <LoginPage />;
 }
