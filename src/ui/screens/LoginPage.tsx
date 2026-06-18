@@ -5,6 +5,7 @@ import { Input } from '../components/Input';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSession } from '../stores/session';
 import { isRealAuth } from '../../infrastructure/auth/authPort';
+import { authErrorMessage } from '../lib/authErrorMessage';
 
 function Logo() {
   return (
@@ -16,32 +17,6 @@ function Logo() {
       </svg>
     </div>
   );
-}
-
-function mapError(err: unknown): string {
-  const msg = err instanceof Error ? err.message.toLowerCase() : '';
-  if (msg.includes('rate limit') || msg.includes('429'))
-    return 'Trop d’emails envoyés. Réessayez dans quelques minutes, ou connectez-vous par mot de passe.';
-  const after = msg.match(/after (\d+) seconds/);
-  if (after) return `Patientez ${after[1]} s avant de redemander un lien.`;
-  if (msg.includes('invalid login') || msg.includes('credentials'))
-    return 'Email ou mot de passe incorrect (ou compte pas encore créé).';
-  if (msg.includes('already registered') || msg.includes('already exists'))
-    return 'Un compte existe déjà pour cet email — connectez-vous.';
-  if (msg.includes('password') && (msg.includes('6') || msg.includes('least') || msg.includes('short')))
-    return 'Mot de passe trop court (au moins 6 caractères).';
-  if (msg.includes('email not confirmed'))
-    return 'Email non confirmé. Confirmez-le via l’email reçu, puis connectez-vous.';
-  if (msg.includes('signup') && (msg.includes('disabled') || msg.includes('not allowed')))
-    return 'Inscriptions désactivées sur Supabase (Authentication → Sign Up → activez « Allow new users to sign up »).';
-  if (msg.includes('redirect'))
-    return 'URL de redirection non autorisée — ajoutez l’URL de l’app dans Supabase (Authentication → URL Configuration).';
-  if (msg.includes('invalid') && msg.includes('email'))
-    return 'Adresse email invalide.';
-  // Cas inconnu : on affiche le vrai message de Supabase pour diagnostiquer.
-  return err instanceof Error && err.message
-    ? `Échec : ${err.message}`
-    : 'Échec de la connexion. Réessayez.';
 }
 
 export function LoginPage() {
@@ -65,7 +40,7 @@ export function LoginPage() {
     try {
       await action();
     } catch (err) {
-      setError(mapError(err));
+      setError(authErrorMessage(err));
     } finally {
       setBusy(false);
     }
