@@ -5,7 +5,7 @@ import { Input } from '../components/Input';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSession } from '../stores/session';
 import { isRealAuth } from '../../infrastructure/auth/authPort';
-import { authErrorMessage } from '../lib/authErrorMessage';
+import { authErrorMessage, isInvalidCredentials, isUserAlreadyExists } from '../lib/authErrorMessage';
 
 function Logo() {
   return (
@@ -52,15 +52,13 @@ export function LoginPage() {
     try {
       await signInPassword(email, password);
     } catch (e1) {
-      const m = e1 instanceof Error ? e1.message.toLowerCase() : '';
-      if (m.includes('invalid login') || m.includes('credentials')) {
+      if (isInvalidCredentials(e1)) {
+        // Compte peut-être inexistant → on tente de le créer.
         try {
           await signUpPassword(email, password);
         } catch (e2) {
-          const m2 = e2 instanceof Error ? e2.message.toLowerCase() : '';
-          if (m2.includes('already registered') || m2.includes('already exists')) {
-            throw new Error('Mot de passe incorrect.');
-          }
+          // Le compte existait : c'était donc un mot de passe incorrect.
+          if (isUserAlreadyExists(e2)) throw new Error('Mot de passe incorrect.');
           throw e2;
         }
       } else throw e1;

@@ -28,6 +28,27 @@ function asAuthError(err: unknown): AuthLikeError {
   return {};
 }
 
+/** Code d'erreur Supabase si présent (sinon undefined). */
+export function authErrorCode(err: unknown): string | undefined {
+  return asAuthError(err).code;
+}
+
+/** Vrai si l'erreur = identifiants invalides / compte inexistant. */
+export function isInvalidCredentials(err: unknown): boolean {
+  const { code, message } = asAuthError(err);
+  if (code) return code === 'invalid_credentials';
+  const m = (message ?? '').toLowerCase();
+  return m.includes('invalid login') || m.includes('credentials');
+}
+
+/** Vrai si l'erreur = un compte existe déjà pour cet email. */
+export function isUserAlreadyExists(err: unknown): boolean {
+  const { code, message } = asAuthError(err);
+  if (code) return code === 'user_already_exists' || code === 'email_exists';
+  const m = (message ?? '').toLowerCase();
+  return m.includes('already registered') || m.includes('already exists');
+}
+
 // Codes d'erreur Supabase → message FR.
 const BY_CODE: Record<string, string> = {
   invalid_credentials: 'Email ou mot de passe incorrect (ou compte pas encore créé).',
