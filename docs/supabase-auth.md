@@ -26,6 +26,7 @@ Dans Supabase → **SQL Editor**, exécuter dans l'ordre :
 1. `supabase/migrations/20260620120000_init.sql` (profils + programmes + RLS)
 2. `supabase/migrations/20260620130000_programmes_shared.sql` (trames partagées)
 3. `supabase/migrations/20260621100000_admin_bootstrap.sql` (bootstrap admin)
+4. `supabase/migrations/20260621110000_default_role_basic.sql` (rôle 'basic' par défaut)
 
 Ou, si le projet est lié (`supabase link`) : `supabase db push`.
 
