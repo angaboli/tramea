@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Input } from '../components/Input';
+import { PasswordInput } from '../components/PasswordInput';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSession } from '../stores/session';
 import { isRealAuth } from '../../infrastructure/auth/authPort';
@@ -20,10 +21,11 @@ function Logo() {
 }
 
 export function LoginPage() {
-  const { phase, pendingEmail, sendLink, signInPassword, signUpPassword, completeLogin } = useSession();
-  const [mode, setMode] = useState<'password' | 'magic'>('password');
+  const { phase, pendingEmail, signInPassword, signUpPassword, completeLogin } = useSession();
+  const [view, setView] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,10 +33,6 @@ export function LoginPage() {
 
   async function run(action: () => Promise<void>) {
     if (busy) return; // anti double-soumission
-    if (!email.trim()) {
-      setError('Saisissez votre adresse email.');
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -46,18 +44,33 @@ export function LoginPage() {
     }
   }
 
-  // Actions explicites — chacune fait UNE chose claire (pas d'effet caché).
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    // En mode mot de passe, le bouton principal = SE CONNECTER (sans email).
-    void run(() => (mode === 'password' ? signInPassword(email, password) : sendLink(email)));
-  }
-  function onCreateAccount() {
+    if (!email.trim()) {
+      setError('Saisissez votre adresse email.');
+      return;
+    }
+    if (view === 'signin') {
+      void run(() => signInPassword(email, password));
+      return;
+    }
+    // Création de compte : mot de passe saisi deux fois.
     if (password.length < 6) {
       setError('Choisissez un mot de passe d’au moins 6 caractères.');
       return;
     }
+    if (password !== confirm) {
+      setError('Les deux mots de passe ne correspondent pas.');
+      return;
+    }
     void run(() => signUpPassword(email, password));
+  }
+
+  function switchView(next: 'signin' | 'signup') {
+    setView(next);
+    setError(null);
+    setPassword('');
+    setConfirm('');
   }
 
   return (
@@ -79,58 +92,55 @@ export function LoginPage() {
             {!linkSent ? (
               <form onSubmit={onSubmit} className="flex flex-col gap-4">
                 <div>
-                  <h2 className="text-lg font-bold">Connexion</h2>
+                  <h2 className="text-lg font-bold">
+                    {view === 'signin' ? 'Connexion' : 'Créer un compte'}
+                  </h2>
                   <p className="mt-1 text-sm text-text-secondary">
-                    {mode === 'password'
+                    {view === 'signin'
                       ? 'Entrez votre email et votre mot de passe.'
-                      : 'Recevez un lien de connexion par email.'}{' '}
+                      : 'Choisissez un mot de passe (saisi deux fois).'}{' '}
                     L'accès est validé par un administrateur.
                   </p>
                 </div>
+
                 <Input
                   label="Adresse email"
                   type="email"
                   required
                   autoFocus
+                  autoComplete="email"
                   placeholder="vous@eglise.org"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                {mode === 'password' && (
-                  <Input
-                    label="Mot de passe"
-                    type="password"
+
+                <PasswordInput
+                  label="Mot de passe"
+                  required
+                  autoComplete={view === 'signin' ? 'current-password' : 'new-password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+
+                {view === 'signup' && (
+                  <PasswordInput
+                    label="Confirmer le mot de passe"
                     required
+                    autoComplete="new-password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
                   />
                 )}
+
                 <Button type="submit" full disabled={busy}>
                   {busy
                     ? 'Veuillez patienter…'
-                    : mode === 'password'
+                    : view === 'signin'
                       ? 'Se connecter'
-                      : 'Recevoir un lien de connexion'}
+                      : 'Créer mon compte'}
                 </Button>
-
-                {mode === 'password' && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      full
-                      disabled={busy}
-                      onClick={onCreateAccount}
-                    >
-                      Créer un compte
-                    </Button>
-                    <p className="text-center text-xs text-text-muted">
-                      Première fois ? Créez votre compte, puis attendez l’activation
-                      par un administrateur.
-                    </p>
-                  </>
-                )}
 
                 {error && (
                   <p className="rounded-md bg-error-soft px-3 py-2 text-center text-sm font-semibold text-error">
@@ -138,18 +148,31 @@ export function LoginPage() {
                   </p>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode((m) => (m === 'password' ? 'magic' : 'password'));
-                    setError(null);
-                  }}
-                  className="text-center text-sm font-semibold text-primary hover:underline"
-                >
-                  {mode === 'password'
-                    ? 'Recevoir un lien par email à la place'
-                    : 'Se connecter par mot de passe'}
-                </button>
+                <p className="text-center text-sm text-text-secondary">
+                  {view === 'signin' ? (
+                    <>
+                      Pas encore de compte ?{' '}
+                      <button
+                        type="button"
+                        onClick={() => switchView('signup')}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        Créer un compte
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Déjà un compte ?{' '}
+                      <button
+                        type="button"
+                        onClick={() => switchView('signin')}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        Se connecter
+                      </button>
+                    </>
+                  )}
+                </p>
               </form>
             ) : (
               <div className="flex flex-col gap-4 text-center">
@@ -162,12 +185,12 @@ export function LoginPage() {
                 <div>
                   <h2 className="text-lg font-bold">Vérifiez votre boîte mail</h2>
                   <p className="mt-1 text-sm text-text-secondary">
-                    Un lien de connexion a été envoyé à{' '}
+                    Un email de confirmation a été envoyé à{' '}
                     <span className="font-semibold text-text">{pendingEmail}</span>.
+                    Confirmez-le, puis connectez-vous.
                   </p>
                 </div>
-                {/* Mode dev (auth locale) uniquement : simuler le retour du lien.
-                    Masqué dès que Supabase est configuré (vrai lien magique). */}
+                {/* Mode dev (auth locale) uniquement : simuler la confirmation. */}
                 {!isRealAuth && (
                   <Button
                     variant="secondary"
@@ -182,7 +205,7 @@ export function LoginPage() {
           </Card>
 
           <p className="mt-5 text-center text-xs text-text-muted">
-            Aucun compte n'est créé sans l'autorisation d'un administrateur.
+            Aucun compte n'est activé sans l'autorisation d'un administrateur.
           </p>
         </div>
       </main>
