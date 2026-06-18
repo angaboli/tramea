@@ -180,35 +180,38 @@ export function CreatorDashboard() {
         <p className="mb-4 rounded-lg bg-error-soft px-3 py-2 text-sm font-semibold text-error">{status}</p>
       )}
 
-      {/* ── Actions ───────────────────────────────────────────────────────── */}
-      <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {canCreateProgramme(session) && (
-          <ActionTile icon={IconDoc} tone="primary" delay={nextDelay()}
-            title="Nouveau programme"
-            desc="Composer l'ordre du culte : sections, chants, moments. Export PDF."
-            cta="Créer un programme" onClick={newProgramme} />
-        )}
-        {canCreateTrame(session) && (
-          <ActionTile icon={IconLayers} tone="accent" delay={nextDelay()}
-            title="Nouvelle trame"
-            desc="Construire la séquence ProPresenter. Export .proPlaylist."
-            cta="Créer une trame" onClick={() => setTrameDialog(true)} />
-        )}
-        {canCreateProgramme(session) && (
-          <ActionTile icon={IconImport} tone="neutral" delay={nextDelay()}
-            title="Importer (PDF / MD)"
-            desc="Partir d'un programme existant : PDF ou Markdown, mappé automatiquement."
-            cta="Importer un fichier" onClick={() => fileInput.current?.click()} />
-        )}
-        {canManageUsers(session) && (
-          <ActionTile icon={IconUsers} tone="success" delay={nextDelay()}
-            title="Utilisateurs"
-            desc="Approuver les nouveaux comptes et attribuer les rôles."
-            cta="Gérer les utilisateurs" onClick={() => navigate('/admin')} />
-        )}
-        <input ref={fileInput} type="file" className="hidden"
-          accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain" onChange={onImportFile} />
-      </div>
+      {/* ── Actions (grille SANS carte orpheline) ─────────────────────────── */}
+      {(() => {
+        const actions: Omit<Parameters<typeof ActionTile>[0], 'delay'>[] = [];
+        if (canCreateProgramme(session))
+          actions.push({ icon: IconDoc, tone: 'primary', title: 'Nouveau programme',
+            desc: "Composer l'ordre du culte : sections, chants, moments. Export PDF.",
+            cta: 'Créer un programme', onClick: newProgramme });
+        if (canCreateTrame(session))
+          actions.push({ icon: IconLayers, tone: 'accent', title: 'Nouvelle trame',
+            desc: 'Construire la séquence ProPresenter. Export .proPlaylist.',
+            cta: 'Créer une trame', onClick: () => setTrameDialog(true) });
+        if (canCreateProgramme(session))
+          actions.push({ icon: IconImport, tone: 'neutral', title: 'Importer (PDF / MD)',
+            desc: "Partir d'un programme existant : PDF ou Markdown, mappé automatiquement.",
+            cta: 'Importer un fichier', onClick: () => fileInput.current?.click() });
+        if (canManageUsers(session))
+          actions.push({ icon: IconUsers, tone: 'success', title: 'Utilisateurs',
+            desc: 'Approuver les nouveaux comptes et attribuer les rôles.',
+            cta: 'Gérer les utilisateurs', onClick: () => navigate('/admin') });
+
+        // 2 → 1 ligne de 2 ; 3 → 1 ligne de 3 ; 4 → 2×2 (jamais d'orpheline).
+        const cols = actions.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
+        return (
+          <div className={['mb-10 grid gap-4', cols].join(' ')}>
+            {actions.map((a) => (
+              <ActionTile key={a.title} {...a} delay={nextDelay()} />
+            ))}
+          </div>
+        );
+      })()}
+      <input ref={fileInput} type="file" className="hidden"
+        accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain" onChange={onImportFile} />
 
       {/* ── Bibliothèque ──────────────────────────────────────────────────── */}
       <section className="fade-up" style={{ animationDelay: `${nextDelay()}ms` }}>
