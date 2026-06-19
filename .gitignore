@@ -39,3 +39,4 @@ Thumbs.db
 supabase/.temp/
 supabase/.branches/
 .supabase/
+.vercel

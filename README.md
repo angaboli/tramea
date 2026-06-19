@@ -29,6 +29,7 @@ pnpm test:run      # tests (une passe)
 pnpm test:cov      # tests + couverture
 pnpm typecheck     # vérification de types
 pnpm build         # build de production
+npx vercel dev     # serveur de dev avec vercel (pour tester gemini)
 ```
 
 ## Documentation
