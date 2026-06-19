@@ -5,6 +5,7 @@
  */
 import type { Programme } from '../../domain/trame/types';
 import { parseProgramText } from '../../domain/import/parseProgram';
+import { parseProgramText as parseProgramTextAi } from './geminiProgramParser';
 import { decodeProgram } from './decodeText';
 
 async function extractPdfText(bytes: Uint8Array): Promise<string> {
@@ -42,5 +43,12 @@ export async function readProgramFile(file: File): Promise<Programme> {
   const isPdf =
     file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
   const text = isPdf ? await extractPdfText(bytes) : decodeProgram(bytes);
+
+  try {
+    return await parseProgramTextAi(text);
+  } catch (error) {
+    console.warn('Parsing IA échoué, fallback sur le parser classique :', error);
+  }
+
   return parseProgramText(text);
 }
