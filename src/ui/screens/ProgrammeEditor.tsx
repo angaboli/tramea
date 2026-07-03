@@ -85,7 +85,10 @@ function ItemRow({
   count: number;
   isTrame: boolean;
 }) {
-  const { updateItem, removeItem, moveItem } = useProgrammeEditor();
+  const { updateItem, removeItem, moveItem, moveItemToSection } = useProgrammeEditor();
+  const otherSections = useProgrammeEditor((s) =>
+    s.programme.sections.filter((sec) => sec.id !== sectionId),
+  );
   const libraryReady = useLibrary((s) => s.ready);
   const [picking, setPicking] = useState(false);
   const [medley, setMedley] = useState(false);
@@ -169,6 +172,22 @@ function ItemRow({
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
           <IconBtn label="Descendre" onClick={() => moveItem(sectionId, index, index + 1)} disabled={index === count - 1}>↓</IconBtn>
+          {otherSections.length > 0 && (
+            <select
+              aria-label="Déplacer vers une autre section"
+              title="Déplacer vers une autre section"
+              value=""
+              onChange={(e) => {
+                if (e.target.value) moveItemToSection(sectionId, item.id, e.target.value);
+              }}
+              className="h-9 max-w-[7.5rem] rounded-md border border-border bg-surface px-1.5 text-xs text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
+            >
+              <option value="">Déplacer vers…</option>
+              {otherSections.map((sec) => (
+                <option key={sec.id} value={sec.id}>{sec.label || 'Sans titre'}</option>
+              ))}
+            </select>
+          )}
           <IconBtn label="Supprimer" onClick={() => removeItem(sectionId, item.id)}>✕</IconBtn>
         </div>
       </div>

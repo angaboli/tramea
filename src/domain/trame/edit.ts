@@ -99,3 +99,27 @@ export function moveItem(
 ): Programme {
   return mapSection(p, sectionId, (s) => ({ ...s, items: move(s.items, from, to) }));
 }
+
+/**
+ * Déplace un item vers une AUTRE section (à la fin de celle-ci). Sans effet si
+ * la section de destination est la même ou introuvable. L'item garde son id.
+ */
+export function moveItemToSection(
+  p: Programme,
+  fromSectionId: string,
+  itemId: string,
+  toSectionId: string,
+): Programme {
+  if (fromSectionId === toSectionId) return p;
+  const from = p.sections.find((s) => s.id === fromSectionId);
+  const item = from?.items.find((i) => i.id === itemId);
+  if (!item || !p.sections.some((s) => s.id === toSectionId)) return p;
+  return {
+    ...p,
+    sections: p.sections.map((s) => {
+      if (s.id === fromSectionId) return { ...s, items: s.items.filter((i) => i.id !== itemId) };
+      if (s.id === toSectionId) return { ...s, items: [...s.items, item] };
+      return s;
+    }),
+  };
+}

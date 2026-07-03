@@ -22,6 +22,7 @@ interface EditorState {
   updateItem: (sectionId: string, itemId: string, patch: Partial<Omit<TrameItem, 'id'>>) => void;
   removeItem: (sectionId: string, itemId: string) => void;
   moveItem: (sectionId: string, from: number, to: number) => void;
+  moveItemToSection: (fromSectionId: string, itemId: string, toSectionId: string) => void;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -53,6 +54,10 @@ export const useProgrammeEditor = create<EditorState>()(
         set((s) => ({ programme: edit.removeItem(s.programme, sectionId, itemId) })),
       moveItem: (sectionId, from, to) =>
         set((s) => ({ programme: edit.moveItem(s.programme, sectionId, from, to) })),
+      moveItemToSection: (fromSectionId, itemId, toSectionId) =>
+        set((s) => ({
+          programme: edit.moveItemToSection(s.programme, fromSectionId, itemId, toSectionId),
+        })),
     }),
     {
       name: 'tramea.editor',
