@@ -1,4 +1,4 @@
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useMemo, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -86,8 +86,14 @@ function ItemRow({
   isTrame: boolean;
 }) {
   const { updateItem, removeItem, moveItem, moveItemToSection } = useProgrammeEditor();
-  const otherSections = useProgrammeEditor((s) =>
-    s.programme.sections.filter((sec) => sec.id !== sectionId),
+  // Sélectionne la référence STABLE (le tableau de sections lui-même, recréé
+  // seulement quand les sections changent) puis filtre en mémo : un sélecteur
+  // qui renvoie un nouveau tableau à chaque rendu ferait boucler
+  // useSyncExternalStore (Zustand v5) → écran blanc en production.
+  const allSections = useProgrammeEditor((s) => s.programme.sections);
+  const otherSections = useMemo(
+    () => allSections.filter((sec) => sec.id !== sectionId),
+    [allSections, sectionId],
   );
   const libraryReady = useLibrary((s) => s.ready);
   const [picking, setPicking] = useState(false);
