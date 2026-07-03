@@ -48,3 +48,10 @@ export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
 
 /** Rétro-compatibilité : simples libellés (si un appelant n'a besoin que du texte). */
 export const RECURRING_LABELS: readonly string[] = RECURRING_MOMENTS.map((m) => m.label);
+
+/**
+ * Modèle FIXE cloné pour tout « Texte personnalisé » (item de type texte,
+ * pas chant) — plus de choix de présentation modèle à faire : plus simple, et
+ * évite d'exposer un réglage (le « fond ») qui n'apporte pas de valeur ici.
+ */
+export const CUSTOM_TEXT_BASE_PRO_FILE = "J'entends ta douce voix - H&L 496.pro";

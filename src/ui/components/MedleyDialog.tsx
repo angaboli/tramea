@@ -23,13 +23,20 @@ export function MedleyDialog({
   initial,
   onSave,
   onClose,
+  fixedBaseProFile,
 }: {
   initial?: Partial<MedleyValue>;
   onSave: (v: MedleyValue) => void;
   onClose: () => void;
+  /**
+   * Modèle imposé (ex. pour un Texte personnalisé) : plus de choix à faire,
+   * le sélecteur « Présentation modèle » est masqué. Utilisé si l'item n'a pas
+   * déjà un modèle enregistré (édition d'un item existant → on garde le sien).
+   */
+  fixedBaseProFile?: string;
 }) {
   const [titre, setTitre] = useState(initial?.titre ?? '');
-  const [baseProFile, setBase] = useState(initial?.baseProFile ?? '');
+  const [baseProFile, setBase] = useState(initial?.baseProFile ?? fixedBaseProFile ?? '');
   const [text, setText] = useState((initial?.slides ?? []).join('\n\n'));
   const [picking, setPicking] = useState(false);
   const [verseRef, setVerseRef] = useState('');
@@ -89,13 +96,17 @@ export function MedleyDialog({
             <input className={field} placeholder="Mon chant, mon verset…" value={titre} onChange={(e) => setTitre(e.target.value)} />
           </label>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-text-secondary">Présentation modèle (mise en forme & fond)</span>
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>Choisir…</Button>
-              {baseProFile ? <Badge tone="success">{baseProFile}</Badge> : <span className="text-xs text-text-muted">Aucune</span>}
+          {/* Texte personnalisé : modèle fixe, pas de choix (le « fond » ne
+              fonctionnait pas bien et n'apportait pas grand-chose ici). */}
+          {!fixedBaseProFile && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-text-secondary">Présentation modèle (mise en forme & fond)</span>
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>Choisir…</Button>
+                {baseProFile ? <Badge tone="success">{baseProFile}</Badge> : <span className="text-xs text-text-muted">Aucune</span>}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col gap-1.5 rounded-md border border-border bg-surface-2 p-3">
             <span className="text-sm font-semibold text-text-secondary">

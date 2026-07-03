@@ -14,7 +14,7 @@ import { SongPicker } from "../components/SongPicker";
 import { MedleyDialog } from "../components/MedleyDialog";
 import { canCreateTrame } from "../../domain/auth/access";
 import { countSongs, missingProFiles } from "../../domain/trame/programme";
-import { RECURRING_MOMENTS } from "../../domain/trame/recurring";
+import { RECURRING_MOMENTS, CUSTOM_TEXT_BASE_PRO_FILE } from "../../domain/trame/recurring";
 import { SECTION_DEFAULT_ITEMS } from "../../domain/trame/sectionDefaults";
 import { findSongByExactName } from "../../domain/library/song";
 import type { Section, TrameItem } from "../../domain/trame/types";
@@ -163,6 +163,7 @@ function ItemRow({
                 }
               : { titre: item.titre }
           }
+          fixedBaseProFile={isSong ? undefined : CUSTOM_TEXT_BASE_PRO_FILE}
           onClose={() => setMedley(false)}
           onSave={(v) =>
             updateItem(sectionId, item.id, {
@@ -794,7 +795,9 @@ export function ProgrammeEditor({
             Un <strong>medley</strong> se crée exactement de la même façon : il
             suffit de mettre les strophes des différents chants à la suite.
             Astuce : prenez un chant modèle avec assez de diapos (le surplus de
-            textes est ignoré). Doc : <code>docs/medley.md</code>.
+            textes est ignoré). Pour un <strong>texte</strong> (moment,
+            verset…), aucun modèle à choisir : il est généré automatiquement.
+            Doc : <code>docs/medley.md</code>.
           </p>
         </details>
       )}
