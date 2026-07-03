@@ -156,15 +156,15 @@ function ItemRow({
           {isTrame && libraryReady && (
             <IconBtn label="Lier à la bibliothèque" onClick={() => setPicking(true)}>📚</IconBtn>
           )}
-          {isTrame && isSong && libraryReady && (
+          {isTrame && libraryReady && (
             <button
               type="button"
-              title="Créer un chant depuis l'app (sert aussi à faire un medley)"
+              title="Diapo personnalisée : chant, medley ou verset biblique"
               onClick={() => setMedley(true)}
               className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
             >
               <SongIcon />
-              Créer le chant
+              {isSong ? 'Créer le chant' : 'Texte personnalisé'}
             </button>
           )}
           <IconBtn label="Monter" onClick={() => moveItem(sectionId, index, index - 1)} disabled={index === 0}>↑</IconBtn>
