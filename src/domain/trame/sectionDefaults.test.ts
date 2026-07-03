@@ -75,6 +75,12 @@ describe('RECURRING_MOMENTS', () => {
     );
   });
 
+  it('Invocation replie aussi sur la diapo générique Prière.pro', () => {
+    expect(findSongByExactName(REAL_LIBRARY, byLabel('Invocation').matchKeys)?.name).toBe(
+      'Prière.pro',
+    );
+  });
+
   it('Chant spécial : jamais de correspondance (pas de matchKeys)', () => {
     const moment = byLabel('Chant spécial');
     expect(moment.type).toBe('song');

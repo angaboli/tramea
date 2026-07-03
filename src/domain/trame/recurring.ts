@@ -21,7 +21,9 @@ export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
   { label: 'Prélude', type: 'label', matchKeys: ['prelude'] },
   { label: 'Bienvenue', type: 'label', matchKeys: ['bienvenue'] },
   { label: 'Entrée des officiants', type: 'label' },
-  { label: 'Invocation', type: 'label' },
+  // Pas de diapo dédiée « Invocation » en général → repli sur la diapo-titre
+  // générique « Prière » si elle existe.
+  { label: 'Invocation', type: 'label', matchKeys: ['invocation', 'priere'] },
   { label: 'Annonces', type: 'label', matchKeys: ['annonces'] },
   // « Groupe de prière » est un intitulé alternatif fréquent pour Intercession.
   { label: 'Intercession', type: 'label', matchKeys: ['intercession', 'groupe de priere'] },
