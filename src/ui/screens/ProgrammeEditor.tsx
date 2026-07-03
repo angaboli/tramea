@@ -617,10 +617,12 @@ export function ProgrammeEditor({
   }
 
   // Raison éventuelle pour laquelle l'export .proPlaylist est bloqué.
+  // L'export a besoin des VRAIS fichiers (dossier local) — l'index partagé
+  // (noms seulement) ne suffit pas pour générer le .proPlaylist.
   const exportBlock: string | null =
     countSongs(programme) === 0
       ? "Ajoutez au moins un chant à la trame."
-      : !library.ready
+      : !library.adapter
         ? "Connectez votre dossier ProPresenter (bouton ci-dessus)."
         : null;
 
@@ -722,12 +724,20 @@ export function ProgrammeEditor({
       </p>
 
       {/* Connexion au dossier ProPresenter : disponible en programme ET en
-          trame, pour pouvoir lier un .pro dès la composition du programme. */}
+          trame, pour pouvoir lier un .pro dès la composition du programme.
+          Sans dossier local, on retombe automatiquement sur l'index PARTAGÉ
+          (noms de fichiers publiés par quiconque a le dossier connecté) :
+          pas besoin de reconnecter juste pour chercher/lier un chant. */}
       {supportsFolder && (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3">
-          {library.ready ? (
+          {library.source === "local" ? (
             <Badge tone="success">
               Bibliothèque connectée · {library.songs.length} chants
+            </Badge>
+          ) : library.source === "shared" ? (
+            <Badge tone="primary">
+              Bibliothèque partagée · {library.songs.length} chants (noms
+              seulement)
             </Badge>
           ) : (
             <span className="text-sm text-text-secondary">
@@ -746,10 +756,23 @@ export function ProgrammeEditor({
           >
             {library.busy
               ? "Connexion…"
-              : library.ready
+              : library.source === "local"
                 ? "Changer de dossier"
                 : "Connecter le dossier"}
           </Button>
+          {library.source === "local" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={library.publishing}
+              onClick={() => library.publish()}
+              title="Rend cette liste de chants disponible sur les autres postes (noms seulement, pas les fichiers)"
+            >
+              {library.publishing
+                ? "Publication…"
+                : "Publier la bibliothèque"}
+            </Button>
+          )}
           <input
             ref={setDirInput}
             type="file"
@@ -757,13 +780,22 @@ export function ProgrammeEditor({
             className="hidden"
             onChange={onPickDir}
           />
-          {supportsPersistentFolder && !library.ready && (
+          {supportsPersistentFolder && library.source !== "local" && (
             <span className="text-xs text-text-muted">
               Le dossier est mémorisé pour les prochaines fois.
             </span>
           )}
+          {library.source === "shared" && (
+            <span className="text-xs text-text-muted">
+              Les fichiers réels (médias) seront pris depuis le poste qui a le
+              dossier connecté, à l'export.
+            </span>
+          )}
           {library.error && (
             <span className="text-xs text-text-muted">{library.error}</span>
+          )}
+          {library.publishError && (
+            <span className="text-xs text-error">{library.publishError}</span>
           )}
         </div>
       )}
@@ -922,7 +954,7 @@ export function ProgrammeEditor({
               />
               Inclure les paroles des chants (depuis la bibliothèque)
             </label>
-            {includeLyrics && !library.ready && (
+            {includeLyrics && !library.adapter && (
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs text-text-muted">
                   Bibliothèque non connectée.
