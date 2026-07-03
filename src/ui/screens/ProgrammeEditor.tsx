@@ -792,14 +792,17 @@ export function ProgrammeEditor({
           {supportsPersistentFolder ? (
             library.source !== "local" && (
               <span className="text-xs text-text-muted">
-                Le dossier est mémorisé pour les prochaines fois.
+                Le dossier choisi est mémorisé : après un rechargement, un
+                simple clic de confirmation suffit (pas besoin de le
+                re-sélectionner).
               </span>
             )
           ) : (
             <span className="text-xs text-text-muted">
               Ce navigateur (Brave, Firefox…) ne mémorise pas le dossier :
-              reconnexion nécessaire à chaque rechargement de page. Pour
-              l'éviter, utilisez Chrome ou Edge.
+              il faut le re-sélectionner entièrement à chaque rechargement de
+              page. Pour n'avoir qu'un clic de confirmation, utilisez Chrome
+              ou Edge.
             </span>
           )}
           {library.source === "shared" && (
