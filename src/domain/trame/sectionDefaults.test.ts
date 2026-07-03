@@ -88,6 +88,16 @@ describe('RECURRING_MOMENTS', () => {
     expect(findSongByExactName(REAL_LIBRARY, moment.matchKeys)).toBeUndefined();
   });
 
+  it('Invocation préfère "Prière 2.pro" quand il existe (au repli générique)', () => {
+    const withDedicated: LibrarySong[] = [
+      ...REAL_LIBRARY,
+      { name: 'Prière 2.pro', relPath: 'x' },
+    ];
+    expect(findSongByExactName(withDedicated, byLabel('Invocation').matchKeys)?.name).toBe(
+      'Prière 2.pro',
+    );
+  });
+
   it('Intercession se lie aussi via l’alias "Groupe de prière"', () => {
     const withAlias: LibrarySong[] = [{ name: 'Groupe de prière.pro', relPath: 'x' }];
     expect(findSongByExactName(withAlias, byLabel('Intercession').matchKeys)?.name).toBe(
