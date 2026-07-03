@@ -28,6 +28,9 @@ export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
   // « Groupe de prière » est un intitulé alternatif fréquent pour Intercession.
   { label: 'Intercession', type: 'label', matchKeys: ['intercession', 'groupe de priere'] },
   { label: 'Prière', type: 'label', matchKeys: ['priere'] },
+  // Contenu parlé/joué, pas de diapo-titre standard connue : à lier à la main.
+  { label: 'Témoignages', type: 'label' },
+  { label: 'Morceau instrumental', type: 'label' },
   // Pas de diapo dédiée « à genoux »/« finale » en général → repli sur la
   // diapo-titre générique « Prière » si elle existe.
   { label: 'Prière à genoux', type: 'label', matchKeys: ['priere a genoux', 'priere'] },
