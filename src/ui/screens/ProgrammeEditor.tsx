@@ -10,7 +10,9 @@ import { SongPicker } from '../components/SongPicker';
 import { MedleyDialog } from '../components/MedleyDialog';
 import { canCreateTrame } from '../../domain/auth/access';
 import { countSongs, missingProFiles } from '../../domain/trame/programme';
-import { RECURRING_LABELS } from '../../domain/trame/recurring';
+import { RECURRING_MOMENTS } from '../../domain/trame/recurring';
+import { SECTION_DEFAULT_ITEMS } from '../../domain/trame/sectionDefaults';
+import { findSongByExactName } from '../../domain/library/song';
 import type { Section, TrameItem } from '../../domain/trame/types';
 import { exportProplaylist } from '../../application/usecases/exportProplaylist';
 import { programmeToExportItems } from '../../application/usecases/programmeToExportItems';
@@ -215,6 +217,7 @@ function SectionCard({
   isTrame: boolean;
 }) {
   const { renameSection, setSectionColor, removeSection, moveSection, addItem } = useProgrammeEditor();
+  const songs = useLibrary((s) => s.songs);
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -262,13 +265,19 @@ function SectionCard({
           Moments courants
         </summary>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {RECURRING_LABELS.map((label) => (
+          {RECURRING_MOMENTS.map((moment) => (
             <button
-              key={label}
-              onClick={() => addItem(section.id, 'label', label)}
+              key={moment.label}
+              onClick={() => {
+                // Pré-lie automatiquement la diapo-titre si elle existe déjà
+                // dans la bibliothèque connectée (sinon l'item est ajouté sans
+                // .pro, à lier à la main comme d'habitude).
+                const match = findSongByExactName(songs, moment.matchKeys);
+                addItem(section.id, moment.type, moment.label, match ? { proFile: match.name } : {});
+              }}
               className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-hover hover:text-text focus-visible:shadow-focus focus-visible:outline-none"
             >
-              + {label}
+              + {moment.label}
             </button>
           ))}
         </div>
@@ -278,7 +287,7 @@ function SectionCard({
 }
 
 export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | 'trame' }) {
-  const { programme, setMeta, addSection } = useProgrammeEditor();
+  const { programme, setMeta, addSection, addItem } = useProgrammeEditor();
   const { session } = useSession();
   const library = useLibrary();
   const [busy, setBusy] = useState(false);
@@ -311,6 +320,21 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
     const files = Array.from(e.target.files ?? []);
     e.target.value = '';
     if (files.length) library.connectFiles(files);
+  }
+
+  // Crée la section preset ; si un .pro correspondant existe déjà dans la
+  // bibliothèque connectée, ajoute un item par défaut pré-lié. Sinon (pas de
+  // correspondance, ex. Culte d'adoration/Temps de louanges dont le contenu
+  // change chaque semaine) : section vide, comme avant.
+  function addSectionPreset(label: string) {
+    addSection(label);
+    const spec = SECTION_DEFAULT_ITEMS[label];
+    if (!spec) return;
+    const match = findSongByExactName(library.songs, spec.matchKeys);
+    if (!match) return;
+    const created = useProgrammeEditor.getState().programme;
+    const newSection = created.sections[created.sections.length - 1];
+    addItem(newSection.id, spec.type, spec.titre, { proFile: match.name });
   }
 
   // Raison éventuelle pour laquelle l'export .proPlaylist est bloqué.
@@ -466,7 +490,14 @@ export function ProgrammeEditor({ mode = 'programme' }: { mode?: 'programme' | '
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Ajouter une section</div>
         <div className="flex flex-wrap gap-2">
           {(isTrame ? SECTION_PRESETS : PROGRAMME_PRESETS).map((label) => (
-            <Button key={label} variant="secondary" size="sm" onClick={() => addSection(label)}>+ {label}</Button>
+            <Button
+              key={label}
+              variant="secondary"
+              size="sm"
+              onClick={() => (isTrame ? addSectionPreset(label) : addSection(label))}
+            >
+              + {label}
+            </Button>
           ))}
           <Button variant="ghost" size="sm" onClick={() => addSection('NOUVELLE SECTION')}>+ Personnalisée</Button>
         </div>
