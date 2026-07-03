@@ -36,6 +36,12 @@ const SECTION_PRESETS = [
 // Programme : en pratique seulement 2 sections récurrentes.
 const PROGRAMME_PRESETS = ["ÉCOLE DU SABBAT", "CULTE D'ADORATION"];
 
+// Bibliothèque complète de référence (SharePoint/OneDrive, médias inclus) —
+// configurable via l'environnement, jamais codée en dur.
+const LIBRARY_SHAREPOINT_URL = import.meta.env.VITE_LIBRARY_SHAREPOINT_URL as
+  | string
+  | undefined;
+
 const field =
   "min-h-[40px] w-full rounded-md border border-border bg-surface px-3 text-sm text-text " +
   "placeholder:text-text-muted focus-visible:shadow-focus focus-visible:outline-none focus-visible:border-primary";
@@ -790,6 +796,18 @@ export function ProgrammeEditor({
               Les fichiers réels (médias) seront pris depuis le poste qui a le
               dossier connecté, à l'export.
             </span>
+          )}
+          {/* Bibliothèque complète de référence (médias inclus) — lien
+              configurable (VITE_LIBRARY_SHAREPOINT_URL), pas codé en dur. */}
+          {LIBRARY_SHAREPOINT_URL && (
+            <a
+              href={LIBRARY_SHAREPOINT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Bibliothèque complète (SharePoint) ↗
+            </a>
           )}
           {library.error && (
             <span className="text-xs text-text-muted">{library.error}</span>
