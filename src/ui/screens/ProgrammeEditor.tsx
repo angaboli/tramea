@@ -629,7 +629,9 @@ export function ProgrammeEditor({
     countSongs(programme) === 0
       ? "Ajoutez au moins un chant à la trame."
       : !library.adapter
-        ? "Connectez votre dossier ProPresenter (bouton ci-dessus)."
+        ? supportsPersistentFolder
+          ? "Connectez votre dossier ProPresenter (bouton ci-dessus)."
+          : "Reconnectez votre dossier ProPresenter (bouton ci-dessus) — ce navigateur ne le mémorise pas d'une session à l'autre."
         : null;
 
   function safeName(): string {
@@ -735,7 +737,14 @@ export function ProgrammeEditor({
           (noms de fichiers publiés par quiconque a le dossier connecté) :
           pas besoin de reconnecter juste pour chercher/lier un chant. */}
       {supportsFolder && (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3">
+        <div
+          className={[
+            "mb-5 flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3",
+            isTrame && !library.adapter && countSongs(programme) > 0
+              ? "border-accent bg-accent-soft"
+              : "border-border bg-surface-2",
+          ].join(" ")}
+        >
           {library.source === "local" ? (
             <Badge tone="success">
               Bibliothèque connectée · {library.songs.length} chants
@@ -786,9 +795,17 @@ export function ProgrammeEditor({
             className="hidden"
             onChange={onPickDir}
           />
-          {supportsPersistentFolder && library.source !== "local" && (
+          {supportsPersistentFolder ? (
+            library.source !== "local" && (
+              <span className="text-xs text-text-muted">
+                Le dossier est mémorisé pour les prochaines fois.
+              </span>
+            )
+          ) : (
             <span className="text-xs text-text-muted">
-              Le dossier est mémorisé pour les prochaines fois.
+              Ce navigateur (Brave, Firefox…) ne mémorise pas le dossier :
+              reconnexion nécessaire à chaque rechargement de page. Pour
+              l'éviter, utilisez Chrome ou Edge.
             </span>
           )}
           {library.source === "shared" && (
