@@ -6,8 +6,14 @@ import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { searchProgrammes } from '../../domain/trame/searchProgrammes';
 import { formatFrDate } from '../../domain/trame/formatDate';
+import { buildTrameTemplate } from '../../domain/trame/trameTemplate';
+import { RECURRING_MOMENTS } from '../../domain/trame/recurring';
+import { findSongByExactName } from '../../domain/library/song';
 import { readProgramFile } from '../../infrastructure/import/readProgramFile';
+import { useLibrary } from '../stores/library';
 import type { Programme } from '../../domain/trame/types';
+
+const MOMENT_BY_LABEL = new Map(RECURRING_MOMENTS.map((m) => [m.label, m]));
 
 /**
  * Création d'une trame : soit on importe un programme (PDF/MD), soit on choisit
@@ -17,7 +23,8 @@ import type { Programme } from '../../domain/trame/types';
 export function NewTrameDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const saved = useSavedProgrammes();
-  const { load, reset } = useProgrammeEditor();
+  const { load } = useProgrammeEditor();
+  const songs = useLibrary((s) => s.songs);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +55,26 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
     if (chosen) useProgramme(chosen);
   }
 
+  // « Partir de zéro » = squelette chronologique habituel (École du sabbat,
+  // Annonces, Intercession, Culte d'adoration…) : les moments récurrents sont
+  // déjà en place, avec leur .pro pré-lié si la bibliothèque connectée en a un
+  // qui correspond ; les chants restent des emplacements VIDES à remplir.
   function fromScratch() {
-    reset(undefined, undefined, 'trame');
+    const today = new Date().toISOString().slice(0, 10);
+    const base = buildTrameTemplate(today);
+    const p: Programme = {
+      ...base,
+      sections: base.sections.map((s) => ({
+        ...s,
+        items: s.items.map((it) => {
+          const moment = MOMENT_BY_LABEL.get(it.titre);
+          if (!moment?.matchKeys) return it;
+          const match = findSongByExactName(songs, moment.matchKeys);
+          return match ? { ...it, proFile: match.name } : it;
+        }),
+      })),
+    };
+    load(p);
     navigate('/trame');
   }
 
