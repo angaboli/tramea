@@ -34,6 +34,11 @@ export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
   { label: 'Méditation / Partage', type: 'label', matchKeys: ['meditation'] },
   // Chant différent chaque semaine : jamais de .pro par défaut.
   { label: 'Chant spécial', type: 'song' },
+  // Contenu (le verset) différent chaque fois : jamais de .pro par défaut. Le
+  // texte biblique réel se récupère via le bouton « Texte personnalisé » de
+  // l'item (Louis Segond 1910, domaine public) puis se génère en diapo à
+  // l'export, comme un chant personnalisé.
+  { label: 'Verset biblique', type: 'label' },
   { label: 'Prière finale', type: 'label', matchKeys: ['priere finale', 'priere'] },
   { label: 'Bénédiction', type: 'label', matchKeys: ['benediction'] },
   { label: 'Postlude', type: 'label', matchKeys: ['postlude'] },

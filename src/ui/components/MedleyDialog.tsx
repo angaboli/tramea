@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { Badge } from './Badge';
 import { SongPicker } from './SongPicker';
+import { fetchVerseText } from '../../infrastructure/bible/fetchVerseText';
 
 export interface MedleyValue {
   titre: string;
@@ -10,10 +11,13 @@ export interface MedleyValue {
 }
 
 /**
- * Création d'un chant depuis l'app : titre, chant modèle (pour une structure
- * ProPresenter valide) et strophes (une par bloc séparé d'une ligne vide). À
- * l'export, le .pro modèle est cloné et son texte remplacé. C'est aussi ainsi
- * qu'on fabrique un medley (mêmes mécanismes, pas de cas particulier).
+ * Création d'un chant (ou d'une diapo personnalisée) depuis l'app : titre,
+ * présentation modèle (pour une structure ProPresenter valide) et texte (une
+ * diapo par bloc séparé d'une ligne vide). À l'export, le .pro modèle est
+ * cloné et son texte remplacé. C'est aussi ainsi qu'on fabrique un medley ou
+ * un verset biblique (mêmes mécanismes, pas de cas particulier) : le bouton
+ * « Insérer un verset biblique » récupère le vrai texte (Louis Segond 1910,
+ * domaine public) et le place dans les diapos ci-dessous.
  */
 export function MedleyDialog({
   initial,
@@ -28,6 +32,9 @@ export function MedleyDialog({
   const [baseProFile, setBase] = useState(initial?.baseProFile ?? '');
   const [text, setText] = useState((initial?.slides ?? []).join('\n\n'));
   const [picking, setPicking] = useState(false);
+  const [verseRef, setVerseRef] = useState('');
+  const [verseBusy, setVerseBusy] = useState(false);
+  const [verseError, setVerseError] = useState<string | null>(null);
 
   const slides = text
     .split(/\n\s*\n/)
@@ -38,6 +45,21 @@ export function MedleyDialog({
     if (!titre.trim() || !baseProFile) return;
     onSave({ titre: titre.trim(), baseProFile, slides });
     onClose();
+  }
+
+  async function insertVerse() {
+    if (!verseRef.trim() || verseBusy) return;
+    setVerseBusy(true);
+    setVerseError(null);
+    try {
+      const { text: verseText, reference } = await fetchVerseText(verseRef.trim());
+      setText((t) => (t.trim() ? `${t.trim()}\n\n${verseText}` : verseText));
+      if (!titre.trim()) setTitre(reference || verseRef.trim());
+    } catch (e) {
+      setVerseError(e instanceof Error ? e.message : 'Erreur inconnue.');
+    } finally {
+      setVerseBusy(false);
+    }
   }
 
   const field =
@@ -57,27 +79,54 @@ export function MedleyDialog({
       )}
       <div className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-xl border border-border bg-surface shadow-xl sm:rounded-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border p-4">
-          <h2 className="text-base font-bold">Créer un chant</h2>
+          <h2 className="text-base font-bold">Texte personnalisé</h2>
           <button aria-label="Fermer" onClick={onClose} className="text-text-muted hover:text-text">✕</button>
         </div>
 
         <div className="flex flex-col gap-3 overflow-y-auto p-4">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-text-secondary">Titre du chant</span>
-            <input className={field} placeholder="Mon chant (ou medley)" value={titre} onChange={(e) => setTitre(e.target.value)} />
+            <span className="text-sm font-semibold text-text-secondary">Titre</span>
+            <input className={field} placeholder="Mon chant, mon verset…" value={titre} onChange={(e) => setTitre(e.target.value)} />
           </label>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-text-secondary">Chant modèle (mise en forme & fond)</span>
+            <span className="text-sm font-semibold text-text-secondary">Présentation modèle (mise en forme & fond)</span>
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>Choisir…</Button>
-              {baseProFile ? <Badge tone="success">{baseProFile}</Badge> : <span className="text-xs text-text-muted">Aucun</span>}
+              {baseProFile ? <Badge tone="success">{baseProFile}</Badge> : <span className="text-xs text-text-muted">Aucune</span>}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 rounded-md border border-border bg-surface-2 p-3">
+            <span className="text-sm font-semibold text-text-secondary">
+              Insérer un verset biblique (optionnel)
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                className={field}
+                placeholder="Jean 3:16 ou Psaume 23:1-4"
+                value={verseRef}
+                onChange={(e) => setVerseRef(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void insertVerse();
+                  }
+                }}
+              />
+              <Button variant="secondary" size="sm" disabled={!verseRef.trim() || verseBusy} onClick={insertVerse}>
+                {verseBusy ? '…' : 'Récupérer'}
+              </Button>
+            </div>
+            <span className="text-xs text-text-muted">
+              Texte réel (Louis Segond 1910, domaine public) inséré ci-dessous, dans une nouvelle diapo.
+            </span>
+            {verseError && <p className="text-xs font-semibold text-error">{verseError}</p>}
           </div>
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-text-secondary">
-              Strophes — une par bloc (séparés par une ligne vide)
+              Diapos — une par bloc (séparés par une ligne vide)
             </span>
             <textarea
               className={field + ' min-h-[200px] py-2'}
@@ -85,7 +134,7 @@ export function MedleyDialog({
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <span className="text-xs text-text-muted">{slides.length} diapo(s) — limité au nombre de diapos du chant de base.</span>
+            <span className="text-xs text-text-muted">{slides.length} diapo(s) — limité au nombre de diapos de la présentation modèle.</span>
           </label>
         </div>
 
