@@ -172,6 +172,9 @@ function ItemRow({
           }
         />
       )}
+      {/* Menu élément : uniquement des actions (type, couleur, liaison .pro,
+          déplacement, suppression) — le titre vit désormais dans la grille de
+          champs ci-dessous, à côté de ses champs associés. */}
       <div className="flex items-center gap-2">
         <button
           aria-label={isSong ? "Basculer en libellé" : "Basculer en chant"}
@@ -185,17 +188,7 @@ function ItemRow({
             {isSong ? "Chant" : "Texte"}
           </Badge>
         </button>
-        <input
-          className={field}
-          placeholder={
-            isSong ? "Titre du chant" : "Moment liturgique (ex : Bienvenue)"
-          }
-          value={item.titre}
-          onChange={(e) =>
-            updateItem(sectionId, item.id, { titre: e.target.value })
-          }
-        />
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-1">
           {/* Couleur du titre (optionnelle) : répercutée sur le PDF. */}
           <span
             className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface"
@@ -291,7 +284,16 @@ function ItemRow({
       </div>
       {isSong ? (
         <div className="mt-2 flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {/* Titre | Réf | Tonalité */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <input
+              className={field}
+              placeholder="Titre du chant"
+              value={item.titre}
+              onChange={(e) =>
+                updateItem(sectionId, item.id, { titre: e.target.value })
+              }
+            />
             <input
               className={field}
               placeholder="Réf (H&L 508)"
@@ -308,6 +310,9 @@ function ItemRow({
                 updateItem(sectionId, item.id, { tonalite: e.target.value })
               }
             />
+          </div>
+          {/* Officiant | Note/remarque | Verset | Lien */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <input
               className={field}
               placeholder="Officiant"
@@ -341,6 +346,7 @@ function ItemRow({
               }
             />
           </div>
+          {/* Fichier .pro */}
           <input
             className={field}
             placeholder="Fichier .pro (via 📚)"
@@ -352,7 +358,16 @@ function ItemRow({
         </div>
       ) : (
         <div className="mt-2 flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {/* Titre | Officiant | Chant/contenu */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <input
+              className={field}
+              placeholder="Moment liturgique (ex : Bienvenue)"
+              value={item.titre}
+              onChange={(e) =>
+                updateItem(sectionId, item.id, { titre: e.target.value })
+              }
+            />
             <input
               className={field}
               placeholder="Officiant"
@@ -369,6 +384,9 @@ function ItemRow({
                 updateItem(sectionId, item.id, { note: e.target.value })
               }
             />
+          </div>
+          {/* Verset | Lien */}
+          <div className="grid grid-cols-2 gap-2">
             <input
               className={field}
               placeholder="Verset"
@@ -386,9 +404,8 @@ function ItemRow({
               }
             />
           </div>
-          {/* Lien vers une présentation .pro (ex. Annonces récurrentes, chant du
-              service de fidélité). Utile en programme (pré-lier avant de créer
-              la trame) et repris tel quel dans le .proPlaylist en trame. */}
+          {/* Fichier .pro — utile en programme (pré-lier avant de créer la
+              trame) et repris tel quel dans le .proPlaylist en trame. */}
           <input
             className={field}
             placeholder="Fichier .pro lié (via 📚)"
