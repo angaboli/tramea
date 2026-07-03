@@ -245,7 +245,7 @@ export async function buildProgrammePdf(
       // l'espace disponible — jamais de colonne (Tonalité/Officiant/
       // Remarques) vide juste pour respecter un découpage à 4 fixe.
       const segments: { text: string; f: PDFFont; size: number }[] = [];
-      if (ref) segments.push({ text: ref, f: bold, size: 10 });
+      if (ref) segments.push({ text: ref, f: font, size: 10 });
       if (ton) segments.push({ text: ton, f: font, size: 10 });
       if (off) segments.push({ text: off, f: font, size: 9.5 });
       if (remark) segments.push({ text: remark, f: font, size: 9.5 });
