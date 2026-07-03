@@ -90,6 +90,40 @@ export function setAtPath(
   return concat(parts);
 }
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+
+/**
+ * Régénère TOUS les UUID du fichier cloné (identité de présentation, diapos,
+ * médias…) en gardant la cohérence interne (un même UUID d'origine est
+ * remplacé par le MÊME nouvel UUID partout). Un remplacement UUID→UUID (36
+ * caractères → 36 caractères) ne change AUCUNE longueur protobuf : sûr, pas de
+ * réencodage nécessaire.
+ *
+ * Indispensable : `retextPro` clone les octets du modèle tels quels, donc deux
+ * présentations créées à partir du MÊME modèle partagent sinon exactement les
+ * mêmes UUID. ProPresenter traite alors l'UUID comme une identité UNIQUE : en
+ * voyant deux présentations avec la même identité, il en « répare » une (la
+ * vide) — diapos blanches / avertissement de taille, même si le contenu texte
+ * est correct. Le UUID nul (00000000-…) est une valeur sémantique et n'est
+ * JAMAIS remplacé.
+ */
+export function regenerateUuids(bytes: Uint8Array): Uint8Array {
+  const s = latin1(bytes);
+  const map = new Map<string, string>();
+  const out = s.replace(UUID_RE, (m) => {
+    const lower = m.toLowerCase();
+    if (lower === NIL_UUID) return m;
+    let fresh = map.get(lower);
+    if (!fresh) {
+      fresh = crypto.randomUUID();
+      map.set(lower, fresh);
+    }
+    return fresh;
+  });
+  return latin1ToBytes(out);
+}
+
 export interface CustomSong {
   title: string;
   /** Une entrée par diapo (texte de la diapo). */
@@ -142,5 +176,7 @@ export function retextPro(
     return reencode(f);
   });
 
-  return { bytes: concat(parts), used, slideCount };
+  // Identité fraîche : voir regenerateUuids — sinon deux présentations créées
+  // à partir du même modèle entreraient en conflit d'identité dans ProPresenter.
+  return { bytes: regenerateUuids(concat(parts)), used, slideCount };
 }

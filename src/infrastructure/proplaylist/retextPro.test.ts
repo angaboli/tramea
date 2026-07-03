@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { escapeRtf, setRtfText, setAtPath, retextPro } from './retextPro';
+import { escapeRtf, setRtfText, setAtPath, retextPro, regenerateUuids } from './retextPro';
 import { walk, get, getAll, encBytesField, encStrField, decodeUtf8 } from './protobuf';
 
 function bytes(s: string): Uint8Array {
@@ -80,5 +80,50 @@ describe('retextPro', () => {
   it('ignore le surplus de strophes (plus que de diapos)', () => {
     const { used } = retextPro(base, { title: 'x', slides: ['a', 'b', 'c'] });
     expect(used).toBe(2);
+  });
+
+  it('régénère les UUID (identité fraîche) pour éviter tout conflit ProPresenter', () => {
+    // Deux champs distincts (f2 = identité, f10 = référence média) partageant le
+    // MÊME uuid d'origine, plus un uuid nul — comme dans un vrai .pro cloné.
+    const baseWithUuid = new Uint8Array([
+      ...encStrField(2, 'id=ad9526ea-8687-45d2-876d-d22bc8c03c10'),
+      ...encStrField(10, 'media=ad9526ea-8687-45d2-876d-d22bc8c03c10'),
+      ...encStrField(11, 'nil=00000000-0000-0000-0000-000000000000'),
+    ]);
+    const a = retextPro(baseWithUuid, { title: 'A', slides: [] });
+    const b = retextPro(baseWithUuid, { title: 'B', slides: [] });
+    const textA = new TextDecoder('latin1').decode(a.bytes);
+    const textB = new TextDecoder('latin1').decode(b.bytes);
+
+    // Le UUID nul (valeur sémantique) n'est jamais touché.
+    expect(textA).toContain('00000000-0000-0000-0000-000000000000');
+    expect(textB).toContain('00000000-0000-0000-0000-000000000000');
+
+    // Le même UUID d'origine (répété 2x dans le fichier) devient le MÊME
+    // nouvel UUID partout (cohérence interne préservée).
+    const idsA = [...textA.matchAll(/id=([0-9a-f-]{36})/g)].map((m) => m[1]);
+    const mediaA = [...textA.matchAll(/media=([0-9a-f-]{36})/g)].map((m) => m[1]);
+    expect(idsA[0]).toBe(mediaA[0]);
+    expect(idsA[0]).not.toBe('ad9526ea-8687-45d2-876d-d22bc8c03c10');
+
+    // Deux appels sur le MÊME modèle (deux items clonés du même .pro) reçoivent
+    // des identités DIFFÉRENTES — sinon collision d'identité dans ProPresenter.
+    expect(textA).not.toBe(textB);
+    const idsB = [...textB.matchAll(/id=([0-9a-f-]{36})/g)].map((m) => m[1]);
+    expect(idsA[0]).not.toBe(idsB[0]);
+  });
+
+  it('regenerateUuids préserve la longueur (UUID → UUID, 36 caractères)', () => {
+    const withUuid = new TextEncoder().encode(
+      'x=ad9526ea-8687-45d2-876d-d22bc8c03c10 y',
+    );
+    expect(regenerateUuids(withUuid).length).toBe(withUuid.length);
+  });
+});
+
+describe('regenerateUuids', () => {
+  it('ne modifie rien si aucun UUID présent', () => {
+    const input = new TextEncoder().encode('rien à voir ici');
+    expect(Array.from(regenerateUuids(input))).toEqual(Array.from(input));
   });
 });
