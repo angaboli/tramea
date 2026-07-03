@@ -8,6 +8,7 @@ import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { countSongs } from '../../domain/trame/programme';
 import { duplicateProgramme } from '../../domain/trame/duplicate';
+import { formatFrDate } from '../../domain/trame/formatDate';
 import type { Programme } from '../../domain/trame/types';
 import { canCreateProgramme, canCreateTrame, canManageUsers } from '../../domain/auth/access';
 
