@@ -268,7 +268,7 @@ export function CreatorDashboard() {
                       </span>
                     </div>
                     <div className="mt-0.5 truncate text-xs text-text-muted">
-                      {p.date} · {countSongs(p)} chant(s) · {p.sections.length} section(s)
+                      {formatFrDate(p.date)} · {countSongs(p)} chant(s) · {p.sections.length} section(s)
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-1">
