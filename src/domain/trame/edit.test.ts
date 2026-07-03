@@ -9,6 +9,7 @@ import {
   updateItem,
   removeItem,
   moveItem,
+  moveItemToSection,
 } from './edit';
 
 describe('édition de programme (immutable)', () => {
@@ -62,5 +63,58 @@ describe('édition de programme (immutable)', () => {
 
     p = removeItem(p, sid, songId);
     expect(p.sections[0].items.map((i) => i.titre)).toEqual(['Bienvenue']);
+  });
+
+  describe('moveItemToSection', () => {
+    it('déplace un item vers une autre section (à la fin)', () => {
+      let p = addSection(emptyProgramme('d'), 'A');
+      p = addSection(p, 'B');
+      const [a, b] = p.sections;
+      p = addItem(p, a.id, 'song', 'Chant 1');
+      p = addItem(p, b.id, 'label', 'Déjà là');
+      const itemId = p.sections[0].items[0].id;
+
+      p = moveItemToSection(p, a.id, itemId, b.id);
+
+      expect(p.sections.find((s) => s.id === a.id)!.items).toHaveLength(0);
+      expect(p.sections.find((s) => s.id === b.id)!.items.map((i) => i.titre)).toEqual([
+        'Déjà là',
+        'Chant 1',
+      ]);
+    });
+
+    it('conserve les données de l’item (proFile, ref…)', () => {
+      let p = addSection(emptyProgramme('d'), 'A');
+      p = addSection(p, 'B');
+      const [a, b] = p.sections;
+      p = addItem(p, a.id, 'song', 'Chant 1', { ref: 'JEM 1', proFile: 'x.pro' });
+      const itemId = p.sections[0].items[0].id;
+
+      p = moveItemToSection(p, a.id, itemId, b.id);
+
+      const moved = p.sections.find((s) => s.id === b.id)!.items[0];
+      expect(moved).toMatchObject({ id: itemId, ref: 'JEM 1', proFile: 'x.pro' });
+    });
+
+    it('ne fait rien si la section de destination est la même', () => {
+      let p = addSection(emptyProgramme('d'), 'A');
+      const a = p.sections[0];
+      p = addItem(p, a.id, 'song', 'Chant 1');
+      const before = p;
+
+      p = moveItemToSection(p, a.id, p.sections[0].items[0].id, a.id);
+
+      expect(p).toBe(before);
+    });
+
+    it('ne fait rien si la section ou l’item est introuvable', () => {
+      let p = addSection(emptyProgramme('d'), 'A');
+      const a = p.sections[0];
+      p = addItem(p, a.id, 'song', 'Chant 1');
+      const itemId = p.sections[0].items[0].id;
+
+      expect(moveItemToSection(p, a.id, 'inconnu', a.id).sections[0].items).toHaveLength(1);
+      expect(moveItemToSection(p, a.id, itemId, 'inconnue').sections[0].items).toHaveLength(1);
+    });
   });
 });
