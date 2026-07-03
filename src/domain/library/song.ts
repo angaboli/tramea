@@ -44,6 +44,29 @@ export function parseSongFileName(name: string): ParsedSong {
   return { titre: titre || base.trim(), ref };
 }
 
+/**
+ * Trouve un chant dont le nom de fichier (sans extension) correspond EXACTEMENT
+ * (accents/casse/ponctuation ignorés) à l'une des `matchKeys`, dans l'ordre
+ * (la première clé qui correspond gagne). Utilisé pour pré-lier automatiquement
+ * les diapos-titres récurrentes (Prélude, Bénédiction…) à leur `.pro`.
+ * Correspondance EXACTE (pas floue) pour éviter les faux positifs
+ * (ex. ne pas confondre « Prière » et « Prière à genoux »).
+ */
+export function findSongByExactName(
+  songs: readonly LibrarySong[],
+  matchKeys: readonly string[] | undefined,
+): LibrarySong | undefined {
+  if (!matchKeys?.length) return undefined;
+  const byNormalized = new Map(
+    songs.map((s) => [normalizeSearch(s.name.replace(/\.pro$/i, '')), s] as const),
+  );
+  for (const key of matchKeys) {
+    const found = byNormalized.get(normalizeSearch(key));
+    if (found) return found;
+  }
+  return undefined;
+}
+
 export function normalizeSearch(s: string): string {
   return s
     .normalize('NFD')

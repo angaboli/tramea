@@ -13,7 +13,12 @@ interface EditorState {
   setSectionColor: (id: string, color: string | undefined) => void;
   removeSection: (id: string) => void;
   moveSection: (from: number, to: number) => void;
-  addItem: (sectionId: string, type: ItemType, titre?: string) => void;
+  addItem: (
+    sectionId: string,
+    type: ItemType,
+    titre?: string,
+    patch?: Partial<Omit<TrameItem, 'id' | 'type' | 'titre'>>,
+  ) => void;
   updateItem: (sectionId: string, itemId: string, patch: Partial<Omit<TrameItem, 'id'>>) => void;
   removeItem: (sectionId: string, itemId: string) => void;
   moveItem: (sectionId: string, from: number, to: number) => void;
@@ -40,8 +45,8 @@ export const useProgrammeEditor = create<EditorState>()(
       moveSection: (from, to) =>
         set((s) => ({ programme: edit.moveSection(s.programme, from, to) })),
 
-      addItem: (sectionId, type, titre) =>
-        set((s) => ({ programme: edit.addItem(s.programme, sectionId, type, titre) })),
+      addItem: (sectionId, type, titre, patch) =>
+        set((s) => ({ programme: edit.addItem(s.programme, sectionId, type, titre, patch) })),
       updateItem: (sectionId, itemId, patch) =>
         set((s) => ({ programme: edit.updateItem(s.programme, sectionId, itemId, patch) })),
       removeItem: (sectionId, itemId) =>

@@ -66,8 +66,9 @@ export function addItem(
   sectionId: string,
   type: ItemType,
   titre = '',
+  patch: Partial<Omit<TrameItem, 'id' | 'type' | 'titre'>> = {},
 ): Programme {
-  const item: TrameItem = { id: uid(), type, titre };
+  const item: TrameItem = { id: uid(), type, titre, ...patch };
   return mapSection(p, sectionId, (s) => ({ ...s, items: [...s.items, item] }));
 }
 
