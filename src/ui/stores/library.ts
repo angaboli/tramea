@@ -3,20 +3,35 @@ import type { LibrarySong } from '../../domain/library/song';
 import type { FileSystemPort } from '../../domain/ports/FileSystemPort';
 import { FileSystemAccessAdapter } from '../../infrastructure/fs/fileSystemAccessAdapter';
 import { DirectoryInputAdapter } from '../../infrastructure/fs/directoryInputAdapter';
+import { publishLibraryIndex, fetchLibraryIndex } from '../../infrastructure/supabase/libraryIndex';
+import { isSupabaseConfigured } from '../../infrastructure/supabase/client';
+
+type Source = 'local' | 'shared' | null;
 
 interface LibraryState {
-  /** Adapter prêt (dossier choisi) ou null (mode dégradé). */
+  /** Adapter prêt (dossier LOCAL choisi) ou null (mode partagé/dégradé). */
   adapter: FileSystemPort | null;
   songs: LibrarySong[];
   ready: boolean;
   busy: boolean;
   error: string | null;
-  /** Réutilise silencieusement le dossier mémorisé si l'accès est déjà accordé. */
+  /** D'où viennent les chants affichés : dossier local, ou index partagé (Supabase). */
+  source: Source;
+  publishing: boolean;
+  publishError: string | null;
+  /**
+   * Réutilise silencieusement le dossier local mémorisé si l'accès est déjà
+   * accordé ; sinon, replie sur l'index PARTAGÉ (noms de fichiers .pro publiés
+   * par quiconque a le dossier connecté) — pas besoin de reconnecter à chaque
+   * fois pour simplement chercher/lier un chant.
+   */
   restore: () => Promise<void>;
   /** Connexion par geste : réutilise le dossier mémorisé (ré-autorisation) ou ouvre le sélecteur. */
   connect: () => Promise<void>;
   /** Indexation depuis des fichiers (<input webkitdirectory>) — Brave / Firefox. */
   connectFiles: (files: File[]) => void;
+  /** Publie la liste de noms (dossier LOCAL connecté) vers l'index partagé. */
+  publish: () => Promise<void>;
 }
 
 // Sélection de dossier disponible partout via <input webkitdirectory>.
@@ -31,10 +46,21 @@ function indexAndSet(set: (p: Partial<LibraryState>) => void, adapter: FileSyste
   set({
     adapter,
     songs,
+    source: 'local',
     ready: songs.length > 0,
     busy: false,
     error: songs.length > 0 ? null : 'Aucun fichier .pro trouvé dans ce dossier.',
   });
+}
+
+async function fallbackToShared(set: (p: Partial<LibraryState>) => void) {
+  if (!isSupabaseConfigured) return;
+  try {
+    const songs = await fetchLibraryIndex();
+    if (songs.length > 0) set({ songs, source: 'shared', ready: true });
+  } catch {
+    /* silencieux : reste en mode dégradé (aucune bibliothèque) */
+  }
 }
 
 export const useLibrary = create<LibraryState>((set, getState) => ({
@@ -43,15 +69,22 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
   ready: false,
   busy: false,
   error: null,
+  source: null,
+  publishing: false,
+  publishError: null,
 
   async restore() {
     if (getState().ready) return;
     try {
       const adapter = await FileSystemAccessAdapter.restoreSilent();
-      if (adapter) indexAndSet(set, adapter);
+      if (adapter) {
+        indexAndSet(set, adapter);
+        return;
+      }
     } catch {
-      /* silencieux : on demandera la connexion au besoin */
+      /* silencieux : on retombe sur l'index partagé */
     }
+    await fallbackToShared(set);
   },
 
   async connect() {
@@ -69,5 +102,17 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
 
   connectFiles(files: File[]) {
     indexAndSet(set, new DirectoryInputAdapter(files));
+  },
+
+  async publish() {
+    const { songs, source } = getState();
+    if (source !== 'local' || songs.length === 0) return;
+    set({ publishing: true, publishError: null });
+    try {
+      await publishLibraryIndex(songs);
+      set({ publishing: false });
+    } catch (e) {
+      set({ publishing: false, publishError: e instanceof Error ? e.message : 'Erreur inconnue.' });
+    }
   },
 }));

@@ -27,6 +27,7 @@ Dans Supabase → **SQL Editor**, exécuter dans l'ordre :
 2. `supabase/migrations/20260620130000_programmes_shared.sql` (trames partagées)
 3. `supabase/migrations/20260621100000_admin_bootstrap.sql` (bootstrap admin)
 4. `supabase/migrations/20260621110000_default_role_basic.sql` (rôle 'basic' par défaut)
+5. `supabase/migrations/20260703120000_library_index.sql` (index partagé de la bibliothèque de chants)
 
 Ou, si le projet est lié (`supabase link`) : `supabase db push`.
 
