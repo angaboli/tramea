@@ -40,4 +40,41 @@ describe('ProgrammeEditor — trame (régression écran blanc)', () => {
     // Le sélecteur « Déplacer vers » n'apparaît que s'il y a d'autres sections.
     expect(screen.getAllByLabelText('Déplacer vers une autre section')).toHaveLength(2);
   });
+
+  it('affiche le bouton de liaison .pro (📚) même sans dossier connecté', () => {
+    render(
+      <MemoryRouter>
+        <ProgrammeEditor mode="trame" />
+      </MemoryRouter>,
+    );
+    // Ne doit PAS disparaître silencieusement quand `library.ready` est faux
+    // (bibliothèque non reconnectée après un rechargement).
+    expect(screen.getAllByLabelText('Lier à la bibliothèque')).toHaveLength(2);
+  });
+});
+
+describe('ProgrammeEditor — programme (lien .pro rétabli)', () => {
+  beforeEach(() => {
+    useSession.setState({
+      phase: 'authenticated',
+      session: { email: 'admin@test', status: 'approved', role: 'basic' },
+    });
+
+    let p = edit.emptyProgramme('2026-06-20', 'Sabbat', 'programme');
+    p = edit.addSection(p, 'ÉCOLE DU SABBAT');
+    p = edit.addItem(p, p.sections[0].id, 'song', 'La voix de Christ');
+    useProgrammeEditor.setState({ programme: p });
+  });
+
+  it("propose de lier un fichier .pro (📚 et champ manuel), même en mode programme", () => {
+    render(
+      <MemoryRouter>
+        <ProgrammeEditor mode="programme" />
+      </MemoryRouter>,
+    );
+    expect(screen.getByLabelText('Lier à la bibliothèque')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Fichier .pro (via 📚)')).toBeInTheDocument();
+    // Pas d'outillage medley/verset : sans effet en programme (pas d'export .proPlaylist).
+    expect(screen.queryByTitle('Diapo personnalisée : chant, medley ou verset biblique')).toBeNull();
+  });
 });
