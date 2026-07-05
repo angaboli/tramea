@@ -351,19 +351,22 @@ export async function buildProgrammePdf(
 
   if (songs.length) {
     newPage();
-    page.drawText('Paroles', { x: M, y: y - 18, size: 18, font: bold, color: INK });
-    y -= 30;
     // Marge horizontale supplémentaire (colonne plus étroite que le tableau
     // du programme) + taille de police réduite : la plupart des lignes
     // tiennent alors sur une seule ligne au lieu de déborder sur une 2e.
+    // Le titre « Paroles » s'aligne sur cette même marge (pas sur M).
     const LM = M + 24;
     const maxW = RIGHT - 24 - LM;
     const LINE_SIZE = 10;
+    const LINE_H = 15; // interligne (était 13 — un peu plus aéré)
     const blockHeight = (block: LyricGroup): number => {
-      let h = block.groupe ? 15 : 0;
-      for (const raw of block.lignes) h += wrap(raw, font, LINE_SIZE, maxW).length * 13;
-      return h + 16; // + espace après le groupe
+      let h = block.groupe ? 16 : 0;
+      for (const raw of block.lignes) h += wrap(raw, font, LINE_SIZE, maxW).length * LINE_H;
+      return h + 18; // + espace après le groupe
     };
+
+    page.drawText('Paroles', { x: LM, y: y - 18, size: 18, font: bold, color: INK });
+    y -= 32;
 
     for (const it of songs) {
       const groups = lyrics[it.id];
@@ -376,7 +379,7 @@ export async function buildProgrammePdf(
 
       // Paroles alignées à gauche (comme le reste du document).
       page.drawText(heading, { x: LM, y: y - 13, size: 13, font: bold, color: INK });
-      y -= 22;
+      y -= 24;
 
       groups.forEach((block, i) => {
         // Les groupes suivants (le 1er est déjà couvert par le titre ci-dessus) :
@@ -388,16 +391,16 @@ export async function buildProgrammePdf(
         if (block.groupe) {
           const label = fit(block.groupe, bold, 10, maxW);
           page.drawText(label, { x: LM, y: y - 10, size: 10, font: bold, color: INK });
-          y -= 15;
+          y -= 16;
         }
         for (const raw of block.lignes) {
           for (const line of wrap(raw, font, LINE_SIZE, maxW)) {
-            if (y - 13 < M) newPage(); // filet de sécurité (groupe > 1 page)
+            if (y - LINE_SIZE < M) newPage(); // filet de sécurité (groupe > 1 page)
             page.drawText(line, { x: LM, y: y - 10, size: LINE_SIZE, font, color: INK });
-            y -= 13;
+            y -= LINE_H;
           }
         }
-        y -= 16; // espace après chaque strophe/groupe
+        y -= 18; // espace après chaque strophe/groupe
       });
       y -= 28; // espace après chaque chant
     }
