@@ -60,23 +60,50 @@ function buildSlideToGroup(top: ReturnType<typeof walk>): Map<string, string> {
   return map;
 }
 
+/** « Introduction » ne fait que répéter le titre déjà affiché en en-tête : redondant. */
+function isIntroduction(name: string | undefined): boolean {
+  return !!name && /^introduction$/i.test(name.trim());
+}
+
 /**
- * Paroles groupées d'un `.pro` : une entrée par diapo, dans l'ordre, avec son
- * étiquette de groupe si le fichier en a. Diapos sans parole (vides après
- * nettoyage) omises ; doublons consécutifs (même groupe + mêmes lignes)
- * fusionnés, comme `extractLyrics`.
+ * Fusionne les diapos CONSÉCUTIVES qui partagent le MÊME nom de groupe en un
+ * seul paragraphe (un couplet réparti sur plusieurs diapos doit s'afficher
+ * comme un seul couplet, pas répété diapo par diapo). Les diapos SANS groupe
+ * (undefined) ne sont jamais fusionnées entre elles — chacune reste son
+ * propre paragraphe, comme avant.
+ */
+function mergeConsecutiveGroups(entries: readonly LyricGroup[]): LyricGroup[] {
+  const out: LyricGroup[] = [];
+  for (const e of entries) {
+    const last = out[out.length - 1];
+    if (e.groupe && last?.groupe === e.groupe) {
+      last.lignes = [...last.lignes, ...e.lignes];
+    } else {
+      out.push({ groupe: e.groupe, lignes: [...e.lignes] });
+    }
+  }
+  return out;
+}
+
+/**
+ * Paroles groupées d'un `.pro` : une entrée par GROUPE (Couplet 1, Refrain…),
+ * dans l'ordre du chant — les diapos consécutives d'un même groupe sont
+ * fusionnées en un seul paragraphe (comme un vrai couplet), et « Introduction »
+ * est retirée (redondante avec le titre déjà affiché). Diapos sans parole
+ * (vides après nettoyage) omises ; doublons consécutifs stricts fusionnés.
  */
 export function extractGroupedLyrics(proBytes: Uint8Array): LyricGroup[] {
   const top = walk(proBytes);
   const slideToGroup = buildSlideToGroup(top);
 
-  const out: LyricGroup[] = [];
+  const raw: LyricGroup[] = [];
   for (const f of top) {
     if (f.field !== 13 || f.wire !== 2) continue;
     const slide = f.value as Uint8Array;
 
     const uuidBytes = getAtPath(slide, SLIDE_UUID_PATH);
     const groupe = uuidBytes ? slideToGroup.get(decodeUtf8(uuidBytes).trim()) : undefined;
+    if (isIntroduction(groupe)) continue;
 
     const rtfBytes = getAtPath(slide, SLIDE_RTF_PATH);
     if (!rtfBytes) continue;
@@ -84,9 +111,9 @@ export function extractGroupedLyrics(proBytes: Uint8Array): LyricGroup[] {
     if (!text) continue;
     const lignes = text.split('\n');
 
-    const prev = out[out.length - 1];
+    const prev = raw[raw.length - 1];
     if (prev && prev.groupe === groupe && prev.lignes.join('\n') === lignes.join('\n')) continue;
-    out.push({ groupe, lignes });
+    raw.push({ groupe, lignes });
   }
-  return out;
+  return mergeConsecutiveGroups(raw);
 }

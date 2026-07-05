@@ -69,4 +69,70 @@ describe('extractGroupedLyrics', () => {
     ]);
     expect(extractGroupedLyrics(bytes)).toEqual([]);
   });
+
+  it('fusionne les diapos consécutives d’un même groupe en un seul paragraphe (comme un vrai couplet)', () => {
+    const u1 = 'aaaaaaaa-0000-0000-0000-000000000001';
+    const u2 = 'aaaaaaaa-0000-0000-0000-000000000002';
+    const u3 = 'aaaaaaaa-0000-0000-0000-000000000003';
+    const u4 = 'aaaaaaaa-0000-0000-0000-000000000004';
+    const bytes = concat([
+      encBytesField(13, slide(u1, '{\\rtf1\\cb1 Pres de Jesus, je trouve un sur asile.}')),
+      encBytesField(13, slide(u2, '{\\rtf1\\cb1 Et si mon ciel est parfois menacant,}')),
+      encBytesField(13, slide(u3, '{\\rtf1\\cb1 Il me rassure ; En Lui je suis tranquille :}')),
+      encBytesField(13, slide(u4, '{\\rtf1\\cb1 Dans ma faiblesse agit son bras puissant.}')),
+      encBytesField(12, group('Couplet 1', [u1, u2, u3, u4])),
+    ]);
+
+    expect(extractGroupedLyrics(bytes)).toEqual([
+      {
+        groupe: 'Couplet 1',
+        lignes: [
+          'Pres de Jesus, je trouve un sur asile.',
+          'Et si mon ciel est parfois menacant,',
+          'Il me rassure ; En Lui je suis tranquille :',
+          'Dans ma faiblesse agit son bras puissant.',
+        ],
+      },
+    ]);
+  });
+
+  it('ne fusionne PAS deux groupes différents qui se suivent', () => {
+    const u1 = 'aaaaaaaa-0000-0000-0000-000000000001';
+    const u2 = 'aaaaaaaa-0000-0000-0000-000000000002';
+    const bytes = concat([
+      encBytesField(13, slide(u1, '{\\rtf1\\cb1 Ligne du couplet}')),
+      encBytesField(13, slide(u2, '{\\rtf1\\cb1 Ligne du refrain}')),
+      encBytesField(12, group('Couplet 1', [u1])),
+      encBytesField(12, group('Refrain', [u2])),
+    ]);
+    expect(extractGroupedLyrics(bytes).map((g) => g.groupe)).toEqual(['Couplet 1', 'Refrain']);
+  });
+
+  it('ne fusionne jamais les diapos SANS groupe entre elles', () => {
+    const u1 = 'aaaaaaaa-0000-0000-0000-000000000001';
+    const u2 = 'aaaaaaaa-0000-0000-0000-000000000002';
+    // Aucun f12 : pas de groupes du tout.
+    const bytes = concat([
+      encBytesField(13, slide(u1, '{\\rtf1\\cb1 Premiere diapo}')),
+      encBytesField(13, slide(u2, '{\\rtf1\\cb1 Deuxieme diapo}')),
+    ]);
+    expect(extractGroupedLyrics(bytes)).toEqual([
+      { groupe: undefined, lignes: ['Premiere diapo'] },
+      { groupe: undefined, lignes: ['Deuxieme diapo'] },
+    ]);
+  });
+
+  it('retire le groupe « Introduction » (redondant avec le titre déjà affiché)', () => {
+    const u1 = 'aaaaaaaa-0000-0000-0000-000000000001';
+    const u2 = 'aaaaaaaa-0000-0000-0000-000000000002';
+    const bytes = concat([
+      encBytesField(13, slide(u1, '{\\rtf1\\cb1 Pres de Jesus - H&L 319}')),
+      encBytesField(13, slide(u2, '{\\rtf1\\cb1 Ligne du couplet}')),
+      encBytesField(12, group('Introduction', [u1])),
+      encBytesField(12, group('Couplet 1', [u2])),
+    ]);
+    expect(extractGroupedLyrics(bytes)).toEqual([
+      { groupe: 'Couplet 1', lignes: ['Ligne du couplet'] },
+    ]);
+  });
 });
