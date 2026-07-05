@@ -754,6 +754,10 @@ export function ProgrammeEditor({
             <Badge tone="success">
               Bibliothèque connectée · {library.songs.length} chants
             </Badge>
+          ) : library.source === "r2" ? (
+            <Badge tone="success">
+              Bibliothèque en ligne · {library.songs.length} chants
+            </Badge>
           ) : library.source === "shared" ? (
             <Badge tone="primary">
               Bibliothèque partagée · {library.songs.length} chants (noms
