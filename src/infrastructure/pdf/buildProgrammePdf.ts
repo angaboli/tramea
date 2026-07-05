@@ -354,19 +354,37 @@ export async function buildProgrammePdf(
     page.drawText('Paroles', { x: M, y: y - 18, size: 18, font: bold, color: INK });
     y -= 30;
     const maxW = RIGHT - M;
+    // Hauteur totale d'un groupe (couplet/refrain), pour ne JAMAIS le couper
+    // entre deux pages : on bascule le groupe ENTIER sur la page suivante
+    // s'il n'y tient pas en entier, plutôt que d'en dessiner une partie.
+    const blockHeight = (block: LyricGroup): number => {
+      let h = block.groupe ? 15 : 0;
+      for (const raw of block.lignes) h += wrap(raw, font, 11, maxW).length * 14;
+      return h + 16; // + espace après le groupe
+    };
+
     for (const it of songs) {
       const groups = lyrics[it.id];
       const heading = fit(it.ref ? `${it.titre} — ${it.ref}` : it.titre, bold, 13, maxW);
-      if (y - 40 < M) newPage();
+
+      // Si le 1er couplet ne tient pas avec le titre, les DEUX basculent sur
+      // la page suivante — jamais un titre seul, orphelin, en bas de page.
+      const firstBlockH = groups.length ? blockHeight(groups[0]) : 0;
+      if (y - 40 - firstBlockH < M) newPage();
+
       // Paroles centrées (contrairement au tableau du programme, aligné à gauche).
       const headW = bold.widthOfTextAtSize(heading, 13);
       page.drawText(heading, { x: M + (maxW - headW) / 2, y: y - 13, size: 13, font: bold, color: INK });
       y -= 22;
-      for (const block of groups) {
+
+      groups.forEach((block, i) => {
+        // Les groupes suivants (le 1er est déjà couvert par le titre ci-dessus) :
+        // page suivante si le groupe ENTIER n'y tient pas.
+        if (i > 0 && y - blockHeight(block) < M) newPage();
+
         // Étiquette de groupe (Couplet 1, Refrain…) — au lieu d'une diapo
         // anonyme, comme le montrent les feuilles de culte habituelles.
         if (block.groupe) {
-          if (y - 14 < M) newPage();
           const label = fit(block.groupe, bold, 10, maxW);
           const labelW = bold.widthOfTextAtSize(label, 10);
           page.drawText(label, {
@@ -376,14 +394,14 @@ export async function buildProgrammePdf(
         }
         for (const raw of block.lignes) {
           for (const line of wrap(raw, font, 11, maxW)) {
-            if (y - 14 < M) newPage();
+            if (y - 14 < M) newPage(); // filet de sécurité (groupe > 1 page)
             const w = font.widthOfTextAtSize(line, 11);
             page.drawText(line, { x: M + (maxW - w) / 2, y: y - 11, size: 11, font, color: INK });
             y -= 14;
           }
         }
         y -= 16; // espace après chaque strophe/groupe
-      }
+      });
       y -= 28; // espace après chaque chant
     }
   }
