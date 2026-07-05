@@ -52,4 +52,30 @@ describe('useLibrary — repli sur la bibliothèque R2', () => {
     expect(s.adapter).toBe(r2Adapter); // export .proPlaylist possible via R2
     expect(s.songs).toEqual([{ name: 'Agnus.pro', relPath: 'Libraries/JEM/Agnus.pro' }]);
   });
+
+  it('restore() : dossier local mémorisé mais VIDE (périmé/déplacé) ne bloque pas le repli sur R2', async () => {
+    const { FileSystemAccessAdapter } = await import('../../infrastructure/fs/fileSystemAccessAdapter');
+    const emptyLocalAdapter: FileSystemPort = {
+      isAvailable: () => true,
+      listPresentations: () => [], // dossier mémorisé mais plus de .pro dedans
+      resolvePresentation: vi.fn(),
+      resolveMedia: vi.fn(),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(FileSystemAccessAdapter.restoreSilent).mockResolvedValueOnce(emptyLocalAdapter as any);
+    const r2Adapter: FileSystemPort = {
+      isAvailable: () => true,
+      listPresentations: () => [{ name: 'Agnus.pro', relPath: 'Libraries/JEM/Agnus.pro' }],
+      resolvePresentation: vi.fn(),
+      resolveMedia: vi.fn(),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(R2Adapter.connect).mockResolvedValueOnce(r2Adapter as any);
+
+    await useLibrary.getState().restore();
+    const s = useLibrary.getState();
+    expect(s.source).toBe('r2');
+    expect(s.ready).toBe(true);
+    expect(s.adapter).toBe(r2Adapter);
+  });
 });
