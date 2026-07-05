@@ -5,7 +5,7 @@
  * testable.
  */
 
-function latin1(bytes: Uint8Array): string {
+export function latin1(bytes: Uint8Array): string {
   let s = '';
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
   return s;
@@ -166,7 +166,7 @@ function rtfBlocks(s: string): string[] {
  * décoratives (séparateurs ProPresenter type « *…*●…* », « „„ ») et les lignes
  * vides, pour un texte propre, lisible comme un poème.
  */
-function keepLyricLines(text: string): string {
+export function keepLyricLines(text: string): string {
   return text
     .split('\n')
     .map((l) => l.trim())

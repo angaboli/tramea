@@ -20,6 +20,7 @@ import fontkit from "@pdf-lib/fontkit";
 import type { Programme, TrameItem } from "../../domain/trame/types";
 import { formatFrDate } from "../../domain/trame/formatDate";
 import { sanitizeWinAnsi } from "./winAnsi";
+import type { LyricGroup } from "../proplaylist/extractGroupedLyrics";
 
 const W = 595.28; // A4
 const H = 841.89;
@@ -115,8 +116,12 @@ async function loadLogo(doc: PDFDocument): Promise<PDFImage | null> {
 }
 
 export interface PdfOptions {
-  /** Paroles à annexer, par nom de fichier .pro (lues depuis la bibliothèque). */
-  lyrics?: Record<string, string[]>;
+  /**
+   * Paroles à annexer, groupées (Couplet/Refrain…), par ID d'item — pas par
+   * nom de fichier .pro (deux items customSong peuvent partager le même
+   * modèle et ne doivent pas se marcher dessus).
+   */
+  lyrics?: Record<string, LyricGroup[]>;
 }
 
 export async function buildProgrammePdf(
@@ -342,7 +347,7 @@ export async function buildProgrammePdf(
 
   const songs = programme.sections
     .flatMap((s) => s.items)
-    .filter((it) => it.proFile && lyrics[it.proFile]?.length);
+    .filter((it) => lyrics[it.id]?.length);
 
   if (songs.length) {
     newPage();
@@ -350,15 +355,26 @@ export async function buildProgrammePdf(
     y -= 30;
     const maxW = RIGHT - M;
     for (const it of songs) {
-      const blocks = lyrics[it.proFile!];
+      const groups = lyrics[it.id];
       const heading = fit(it.ref ? `${it.titre} — ${it.ref}` : it.titre, bold, 13, maxW);
       if (y - 40 < M) newPage();
       // Paroles centrées (contrairement au tableau du programme, aligné à gauche).
       const headW = bold.widthOfTextAtSize(heading, 13);
       page.drawText(heading, { x: M + (maxW - headW) / 2, y: y - 13, size: 13, font: bold, color: INK });
       y -= 22;
-      for (const block of blocks) {
-        for (const raw of block.split('\n')) {
+      for (const block of groups) {
+        // Étiquette de groupe (Couplet 1, Refrain…) — au lieu d'une diapo
+        // anonyme, comme le montrent les feuilles de culte habituelles.
+        if (block.groupe) {
+          if (y - 14 < M) newPage();
+          const label = fit(block.groupe, bold, 10, maxW);
+          const labelW = bold.widthOfTextAtSize(label, 10);
+          page.drawText(label, {
+            x: M + (maxW - labelW) / 2, y: y - 10, size: 10, font: bold, color: INK,
+          });
+          y -= 15;
+        }
+        for (const raw of block.lignes) {
           for (const line of wrap(raw, font, 11, maxW)) {
             if (y - 14 < M) newPage();
             const w = font.widthOfTextAtSize(line, 11);
@@ -366,7 +382,7 @@ export async function buildProgrammePdf(
             y -= 14;
           }
         }
-        y -= 16; // espace après chaque strophe (diapo)
+        y -= 16; // espace après chaque strophe/groupe
       }
       y -= 28; // espace après chaque chant
     }

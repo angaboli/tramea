@@ -3,11 +3,14 @@ import { Button } from './Button';
 import { Badge } from './Badge';
 import { SongPicker } from './SongPicker';
 import { fetchVerseText } from '../../infrastructure/bible/fetchVerseText';
+import { parseSlideBlocks, serializeSlideBlocks } from '../../domain/trame/parseSlideBlocks';
 
 export interface MedleyValue {
   titre: string;
   baseProFile: string;
   slides: string[];
+  /** Étiquette de groupe par diapo (« Couplet 1 », « Refrain »…), optionnel. */
+  groups?: (string | undefined)[];
 }
 
 /**
@@ -37,20 +40,24 @@ export function MedleyDialog({
 }) {
   const [titre, setTitre] = useState(initial?.titre ?? '');
   const [baseProFile, setBase] = useState(initial?.baseProFile ?? fixedBaseProFile ?? '');
-  const [text, setText] = useState((initial?.slides ?? []).join('\n\n'));
+  const [text, setText] = useState(serializeSlideBlocks(initial?.slides ?? [], initial?.groups));
   const [picking, setPicking] = useState(false);
   const [verseRef, setVerseRef] = useState('');
   const [verseBusy, setVerseBusy] = useState(false);
   const [verseError, setVerseError] = useState<string | null>(null);
 
-  const slides = text
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const blocks = parseSlideBlocks(text);
+  const slides = blocks.map((b) => b.text);
 
   function save() {
     if (!titre.trim() || !baseProFile) return;
-    onSave({ titre: titre.trim(), baseProFile, slides });
+    const groups = blocks.map((b) => b.group);
+    onSave({
+      titre: titre.trim(),
+      baseProFile,
+      slides,
+      groups: groups.some(Boolean) ? groups : undefined,
+    });
     onClose();
   }
 
@@ -140,12 +147,16 @@ export function MedleyDialog({
               Diapos — une par bloc (séparés par une ligne vide)
             </span>
             <textarea
-              className={field + ' min-h-[200px] py-2'}
-              placeholder={'Strophe 1\nligne 2\n\nRefrain\nligne 2'}
+              className={field + ' min-h-[360px] py-2'}
+              placeholder={'#Couplet 1\nStrophe 1\nligne 2\n\n#Refrain\nRefrain\nligne 2'}
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <span className="text-xs text-text-muted">{slides.length} diapo(s) — limité au nombre de diapos de la présentation modèle.</span>
+            <span className="text-xs text-text-muted">
+              {slides.length} diapo(s) — limité au nombre de diapos de la présentation modèle.
+              Astuce : commencez un bloc par <code>#Couplet 1</code> ou <code>#Refrain</code> pour
+              l'étiqueter (affiché groupé dans le PDF) — optionnel.
+            </span>
           </label>
         </div>
 
