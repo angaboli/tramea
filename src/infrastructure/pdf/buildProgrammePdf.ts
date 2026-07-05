@@ -234,33 +234,31 @@ export async function buildProgrammePdf(
       hexColor(item.color) ?? INK,
     );
 
+    // Seules les colonnes AVEC contenu sont dessinées, réparties sur l'espace
+    // disponible — jamais de colonne vide. Chant : Réf | Tonalité | Officiant
+    // | Remarques. Texte/moment (pas de réf/tonalité) : Officiant | Remarques
+    // — dans une colonne séparée, pas fondus ensemble.
+    const segments: { text: string; f: PDFFont; size: number }[] = [];
     if (merged) {
-      // Ligne fusionnée (moment sans réf/tonalité) : on affiche TOUT ce qui est
-      // saisi (officiant, note, verset) au lieu d'en masquer.
-      const content = [off, note, verset].filter(Boolean).join("  ·  ");
-      // si un lien est présent, on laisse de la place à droite
-      if (content) textC(content, X_REF, lien ? RIGHT - 60 : RIGHT, baseline, font, 10);
+      if (off) segments.push({ text: off, f: font, size: 10 });
+      if (remark) segments.push({ text: remark, f: font, size: 9.5 });
     } else {
-      // Chant : seules les colonnes AVEC contenu sont dessinées, réparties sur
-      // l'espace disponible — jamais de colonne (Tonalité/Officiant/
-      // Remarques) vide juste pour respecter un découpage à 4 fixe.
-      const segments: { text: string; f: PDFFont; size: number }[] = [];
       if (ref) segments.push({ text: ref, f: font, size: 10 });
       if (ton) segments.push({ text: ton, f: font, size: 10 });
       if (off) segments.push({ text: off, f: font, size: 9.5 });
       if (remark) segments.push({ text: remark, f: font, size: 9.5 });
+    }
 
-      const contentRight = lien ? RIGHT - 50 : RIGHT;
-      const n = segments.length;
-      if (n > 0) {
-        const colW = (contentRight - X_REF) / n;
-        segments.forEach((seg, i) => {
-          const x1 = X_REF + i * colW;
-          const x2 = X_REF + (i + 1) * colW;
-          if (i > 0) vline(x1, top, botY);
-          textC(seg.text, x1, x2, baseline, seg.f, seg.size);
-        });
-      }
+    const contentRight = lien ? RIGHT - 50 : RIGHT;
+    const n = segments.length;
+    if (n > 0) {
+      const colW = (contentRight - X_REF) / n;
+      segments.forEach((seg, i) => {
+        const x1 = X_REF + i * colW;
+        const x2 = X_REF + (i + 1) * colW;
+        if (i > 0) vline(x1, top, botY);
+        textC(seg.text, x1, x2, baseline, seg.f, seg.size);
+      });
     }
     if (lien) drawLink(lien, RIGHT, baseline);
     y -= ROW_H;
