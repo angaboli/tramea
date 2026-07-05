@@ -98,7 +98,7 @@ export function AdminPanel() {
   const { pending, others } = partitionUsers(users);
 
   return (
-    <main className="mx-auto max-w-5xl xl:max-w-3xl px-4 py-8 sm:px-8">
+    <main className="mx-auto max-w-5xl xl:max-w-5xl px-4 py-8 sm:px-8">
       <Link
         to="/creator"
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-text"

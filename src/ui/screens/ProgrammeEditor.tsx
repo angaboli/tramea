@@ -14,7 +14,10 @@ import { SongPicker } from "../components/SongPicker";
 import { MedleyDialog } from "../components/MedleyDialog";
 import { canCreateTrame } from "../../domain/auth/access";
 import { countSongs, missingProFiles } from "../../domain/trame/programme";
-import { RECURRING_MOMENTS, CUSTOM_TEXT_BASE_PRO_FILE } from "../../domain/trame/recurring";
+import {
+  RECURRING_MOMENTS,
+  CUSTOM_TEXT_BASE_PRO_FILE,
+} from "../../domain/trame/recurring";
 import { SECTION_DEFAULT_ITEMS } from "../../domain/trame/sectionDefaults";
 import { findSongByExactName } from "../../domain/library/song";
 import type { Section, TrameItem } from "../../domain/trame/types";
@@ -167,7 +170,11 @@ function ItemRow({
           onSave={(v) =>
             updateItem(sectionId, item.id, {
               titre: v.titre,
-              customSong: { baseProFile: v.baseProFile, slides: v.slides, groups: v.groups },
+              customSong: {
+                baseProFile: v.baseProFile,
+                slides: v.slides,
+                groups: v.groups,
+              },
             })
           }
         />
@@ -630,7 +637,10 @@ export function ProgrammeEditor({
   async function gatherLyrics() {
     if (!includeLyrics) return undefined;
     const items = programme.sections.flatMap((s) => s.items);
-    const out: Record<string, import("../../infrastructure/proplaylist/extractGroupedLyrics").LyricGroup[]> = {};
+    const out: Record<
+      string,
+      import("../../infrastructure/proplaylist/extractGroupedLyrics").LyricGroup[]
+    > = {};
 
     // Chants personnalisés (medley / verset / texte) : paroles déjà connues
     // (saisies dans le dialogue), aucun fichier à lire pour elles.
@@ -638,7 +648,10 @@ export function ProgrammeEditor({
       const cs = it.customSong;
       if (!cs?.slides.length) continue;
       const groups = cs.slides
-        .map((text, i) => ({ groupe: cs.groups?.[i], lignes: text.split("\n").filter(Boolean) }))
+        .map((text, i) => ({
+          groupe: cs.groups?.[i],
+          lignes: text.split("\n").filter(Boolean),
+        }))
         .filter((g) => g.lignes.length > 0);
       if (groups.length) out[it.id] = groups;
     }
@@ -647,7 +660,8 @@ export function ProgrammeEditor({
     // (Couplet/Refrain…), avec repli sur un texte simple si pas de groupes.
     const fs = library.adapter;
     if (fs) {
-      const { extractGroupedLyrics } = await import("../../infrastructure/proplaylist/extractGroupedLyrics");
+      const { extractGroupedLyrics } =
+        await import("../../infrastructure/proplaylist/extractGroupedLyrics");
       const cache = new Map<string, ReturnType<typeof extractGroupedLyrics>>();
       for (const it of items) {
         if (!it.proFile || out[it.id]) continue;
@@ -715,7 +729,7 @@ export function ProgrammeEditor({
   }
 
   return (
-    <main className="mx-auto max-w-5xl xl:max-w-3xl px-4 py-8 sm:px-8">
+    <main className="mx-auto max-w-5xl xl:max-w-5xl px-4 py-8 sm:px-8">
       <Link
         to="/creator"
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-text"
@@ -796,10 +810,9 @@ export function ProgrammeEditor({
             )
           ) : (
             <span className="text-xs text-text-muted">
-              Ce navigateur (Brave, Firefox…) ne mémorise pas le dossier :
-              il faut le re-sélectionner entièrement à chaque rechargement de
-              page. Pour n'avoir qu'un clic de confirmation, utilisez Chrome
-              ou Edge.
+              Ce navigateur (Brave, Firefox…) ne mémorise pas le dossier : il
+              faut le re-sélectionner entièrement à chaque rechargement de page.
+              Pour n'avoir qu'un clic de confirmation, utilisez Chrome ou Edge.
             </span>
           )}
           {library.error && (
