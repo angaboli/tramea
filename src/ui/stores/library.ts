@@ -3,10 +3,11 @@ import type { LibrarySong } from '../../domain/library/song';
 import type { FileSystemPort } from '../../domain/ports/FileSystemPort';
 import { FileSystemAccessAdapter } from '../../infrastructure/fs/fileSystemAccessAdapter';
 import { DirectoryInputAdapter } from '../../infrastructure/fs/directoryInputAdapter';
+import { R2Adapter } from '../../infrastructure/fs/r2Adapter';
 import { publishLibraryIndex, fetchLibraryIndex } from '../../infrastructure/supabase/libraryIndex';
 import { isSupabaseConfigured } from '../../infrastructure/supabase/client';
 
-type Source = 'local' | 'shared' | null;
+type Source = 'local' | 'r2' | 'shared' | null;
 
 interface LibraryState {
   /** Adapter prêt (dossier LOCAL choisi) ou null (mode partagé/dégradé). */
@@ -39,21 +40,40 @@ export const supportsFolder = true;
 // File System Access API (Chrome/Edge) : permet de MÉMORISER le dossier.
 export const supportsPersistentFolder = FileSystemAccessAdapter.isSupported();
 
-function indexAndSet(set: (p: Partial<LibraryState>) => void, adapter: FileSystemPort) {
+function indexAndSet(
+  set: (p: Partial<LibraryState>) => void,
+  adapter: FileSystemPort,
+  source: Source = 'local',
+) {
   const songs: LibrarySong[] = adapter
     .listPresentations()
     .map((p) => ({ name: p.name, relPath: p.relPath }));
   set({
     adapter,
     songs,
-    source: 'local',
+    source,
     ready: songs.length > 0,
     busy: false,
     error: songs.length > 0 ? null : 'Aucun fichier .pro trouvé dans ce dossier.',
   });
 }
 
-async function fallbackToShared(set: (p: Partial<LibraryState>) => void) {
+/**
+ * Replis distants, dans l'ordre : R2 (bucket partagé, adapter complet — la
+ * recherche ET l'export .proPlaylist fonctionnent sans dossier local), puis
+ * l'index Supabase (noms seulement, pas d'export possible).
+ */
+async function fallbackRemote(set: (p: Partial<LibraryState>) => void) {
+  try {
+    const r2 = await R2Adapter.connect();
+    if (r2) {
+      indexAndSet(set, r2, 'r2');
+      return;
+    }
+  } catch {
+    /* silencieux : on retombe sur l'index partagé (noms seulement) */
+  }
+
   if (!isSupabaseConfigured) return;
   try {
     const songs = await fetchLibraryIndex();
@@ -84,7 +104,7 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
     } catch {
       /* silencieux : on retombe sur l'index partagé */
     }
-    await fallbackToShared(set);
+    await fallbackRemote(set);
   },
 
   async connect() {
