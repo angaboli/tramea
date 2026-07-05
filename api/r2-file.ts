@@ -29,11 +29,13 @@ export default async function handler(req: any, res: any) {
     res.setHeader("Cache-Control", "private, max-age=3600");
     return res.status(200).send(Buffer.from(bytes));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
-    if (/NoSuchKey|NotFound/i.test(message)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const name = (error as any)?.name ?? (error as any)?.Code;
+    if (name === "NoSuchKey" || name === "NotFound") {
       return res.status(404).json({ error: "Fichier introuvable." });
     }
     console.error("Erreur r2-file:", error);
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
     return res.status(500).json({ error: message });
   }
 }
