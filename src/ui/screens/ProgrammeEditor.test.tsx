@@ -74,7 +74,10 @@ describe('ProgrammeEditor — programme (lien .pro rétabli)', () => {
     );
     expect(screen.getByLabelText('Lier à la bibliothèque')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Fichier .pro (via 📚)')).toBeInTheDocument();
-    // Pas d'outillage medley/verset : sans effet en programme (pas d'export .proPlaylist).
-    expect(screen.queryByTitle('Diapo personnalisée : chant, medley ou verset biblique')).toBeNull();
+    // L'outil medley/verset est aussi utile en programme (préparer le contenu
+    // avant l'export .proPlaylist, qui reste réservé à la trame).
+    expect(
+      screen.getByTitle('Diapo personnalisée : chant, medley ou verset biblique'),
+    ).toBeInTheDocument();
   });
 });
