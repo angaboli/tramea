@@ -109,11 +109,11 @@ export function extractGroupedLyrics(proBytes: Uint8Array): LyricGroup[] {
     if (!rtfBytes) continue;
     const text = keepLyricLines(rtfToText(latin1(rtfBytes)));
     if (!text) continue;
-    // Les sauts de ligne DANS une diapo ne sont qu'un pré-découpage pour un
-    // écran étroit (ProPresenter) — pas une structure poétique voulue. On les
-    // rejoint en une seule ligne logique par diapo ; le PDF la répartit lui-
-    // même sur toute la largeur disponible (pas de retour prématuré).
-    const lignes = [text.split('\n').join(' ')];
+    // Chaque saut de ligne DANS une diapo est conservé tel quel : il reflète
+    // la mise en page voulue par l'auteur du chant (2 lignes par vers,
+    // comme dans un recueil imprimé), même si le point de coupure ne suit
+    // pas toujours la grammaire.
+    const lignes = text.split('\n');
 
     const prev = raw[raw.length - 1];
     if (prev && prev.groupe === groupe && prev.lignes.join('\n') === lignes.join('\n')) continue;

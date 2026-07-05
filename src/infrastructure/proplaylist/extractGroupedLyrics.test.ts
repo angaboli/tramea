@@ -122,14 +122,13 @@ describe('extractGroupedLyrics', () => {
     ]);
   });
 
-  it('rejoint les sauts de ligne INTERNES à une diapo (pré-découpage écran, pas de la poésie)', () => {
+  it('conserve les sauts de ligne INTERNES à une diapo (mise en page voulue du chant)', () => {
     const uuidA = 'aaaaaaaa-0000-0000-0000-000000000000';
-    // \par à l'intérieur d'UNE diapo : juste un retour à la ligne écran.
     const bytes = concat([
       encBytesField(13, slide(uuidA, '{\\rtf1\\cb1 Pres de Jesus, je trouve un sur\\par asile.}')),
     ]);
     expect(extractGroupedLyrics(bytes)).toEqual([
-      { groupe: undefined, lignes: ['Pres de Jesus, je trouve un sur asile.'] },
+      { groupe: undefined, lignes: ['Pres de Jesus, je trouve un sur', 'asile.'] },
     ]);
   });
 
