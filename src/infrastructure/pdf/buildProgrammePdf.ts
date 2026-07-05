@@ -372,9 +372,8 @@ export async function buildProgrammePdf(
       const firstBlockH = groups.length ? blockHeight(groups[0]) : 0;
       if (y - 40 - firstBlockH < M) newPage();
 
-      // Paroles centrées (contrairement au tableau du programme, aligné à gauche).
-      const headW = bold.widthOfTextAtSize(heading, 13);
-      page.drawText(heading, { x: M + (maxW - headW) / 2, y: y - 13, size: 13, font: bold, color: INK });
+      // Paroles alignées à gauche (comme le reste du document).
+      page.drawText(heading, { x: M, y: y - 13, size: 13, font: bold, color: INK });
       y -= 22;
 
       groups.forEach((block, i) => {
@@ -386,17 +385,13 @@ export async function buildProgrammePdf(
         // anonyme, comme le montrent les feuilles de culte habituelles.
         if (block.groupe) {
           const label = fit(block.groupe, bold, 10, maxW);
-          const labelW = bold.widthOfTextAtSize(label, 10);
-          page.drawText(label, {
-            x: M + (maxW - labelW) / 2, y: y - 10, size: 10, font: bold, color: INK,
-          });
+          page.drawText(label, { x: M, y: y - 10, size: 10, font: bold, color: INK });
           y -= 15;
         }
         for (const raw of block.lignes) {
           for (const line of wrap(raw, font, 11, maxW)) {
             if (y - 14 < M) newPage(); // filet de sécurité (groupe > 1 page)
-            const w = font.widthOfTextAtSize(line, 11);
-            page.drawText(line, { x: M + (maxW - w) / 2, y: y - 11, size: 11, font, color: INK });
+            page.drawText(line, { x: M, y: y - 11, size: 11, font, color: INK });
             y -= 14;
           }
         }

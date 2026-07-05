@@ -112,13 +112,11 @@ function ItemRow({
   item,
   index,
   count,
-  isTrame,
 }: {
   sectionId: string;
   item: TrameItem;
   index: number;
   count: number;
-  isTrame: boolean;
 }) {
   const { updateItem, removeItem, moveItem, moveItemToSection } =
     useProgrammeEditor();
@@ -230,19 +228,18 @@ function ItemRow({
           >
             📚
           </IconBtn>
-          {/* Diapo personnalisée (medley/verset) : n'a d'effet qu'à l'export
-              .proPlaylist → réservée à l'éditeur de TRAME. */}
-          {isTrame && (
-            <button
-              type="button"
-              title="Diapo personnalisée : chant, medley ou verset biblique"
-              onClick={() => setMedley(true)}
-              className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
-            >
-              <SongIcon />
-              {isSong ? "Créer le chant" : "Texte personnalisé"}
-            </button>
-          )}
+          {/* Diapo personnalisée (medley/verset) : visible aussi sur PROGRAMME
+              (pas seulement trame) — utile pour préparer le contenu même
+              avant l'export .proPlaylist, qui reste réservé à la trame. */}
+          <button
+            type="button"
+            title="Diapo personnalisée : chant, medley ou verset biblique"
+            onClick={() => setMedley(true)}
+            className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-hover focus-visible:shadow-focus focus-visible:outline-none"
+          >
+            <SongIcon />
+            {isSong ? "Créer le chant" : "Texte personnalisé"}
+          </button>
           <IconBtn
             label="Monter"
             onClick={() => moveItem(sectionId, index, index - 1)}
@@ -426,12 +423,10 @@ function SectionCard({
   section,
   index,
   count,
-  isTrame,
 }: {
   section: Section;
   index: number;
   count: number;
-  isTrame: boolean;
 }) {
   const {
     renameSection,
@@ -503,7 +498,6 @@ function SectionCard({
             item={it}
             index={i}
             count={section.items.length}
-            isTrame={isTrame}
           />
         ))}
         {section.items.length === 0 && (
@@ -905,7 +899,6 @@ export function ProgrammeEditor({
             section={s}
             index={i}
             count={programme.sections.length}
-            isTrame={isTrame}
           />
         ))}
       </div>
