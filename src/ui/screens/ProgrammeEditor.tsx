@@ -738,9 +738,9 @@ export function ProgrammeEditor({
 
       {/* Connexion au dossier ProPresenter : disponible en programme ET en
           trame, pour pouvoir lier un .pro dès la composition du programme.
-          Sans dossier local, on retombe automatiquement sur l'index PARTAGÉ
-          (noms de fichiers publiés par quiconque a le dossier connecté) :
-          pas besoin de reconnecter juste pour chercher/lier un chant. */}
+          Sans dossier local, on se connecte automatiquement à la
+          bibliothèque R2 (permanente, en ligne) : pas besoin de dossier
+          local pour chercher/lier un chant ni pour exporter. */}
       {supportsFolder && (
         <div
           className={[
@@ -757,11 +757,6 @@ export function ProgrammeEditor({
           ) : library.source === "r2" ? (
             <Badge tone="success">
               Bibliothèque en ligne · {library.songs.length} chants
-            </Badge>
-          ) : library.source === "shared" ? (
-            <Badge tone="primary">
-              Bibliothèque partagée · {library.songs.length} chants (noms
-              seulement)
             </Badge>
           ) : (
             <span className="text-sm text-text-secondary">
@@ -784,19 +779,6 @@ export function ProgrammeEditor({
                 ? "Changer de dossier"
                 : "Connecter le dossier"}
           </Button>
-          {library.source === "local" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={library.publishing}
-              onClick={() => library.publish()}
-              title="Rend cette liste de chants disponible sur les autres postes (noms seulement, pas les fichiers)"
-            >
-              {library.publishing
-                ? "Publication…"
-                : "Publier la bibliothèque"}
-            </Button>
-          )}
           <input
             ref={setDirInput}
             type="file"
@@ -820,17 +802,8 @@ export function ProgrammeEditor({
               ou Edge.
             </span>
           )}
-          {library.source === "shared" && (
-            <span className="text-xs text-text-muted">
-              Les fichiers réels (médias) seront pris depuis le poste qui a le
-              dossier connecté, à l'export.
-            </span>
-          )}
           {library.error && (
             <span className="text-xs text-text-muted">{library.error}</span>
-          )}
-          {library.publishError && (
-            <span className="text-xs text-error">{library.publishError}</span>
           )}
         </div>
       )}

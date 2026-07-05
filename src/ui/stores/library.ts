@@ -4,35 +4,29 @@ import type { FileSystemPort } from '../../domain/ports/FileSystemPort';
 import { FileSystemAccessAdapter } from '../../infrastructure/fs/fileSystemAccessAdapter';
 import { DirectoryInputAdapter } from '../../infrastructure/fs/directoryInputAdapter';
 import { R2Adapter } from '../../infrastructure/fs/r2Adapter';
-import { publishLibraryIndex, fetchLibraryIndex } from '../../infrastructure/supabase/libraryIndex';
-import { isSupabaseConfigured } from '../../infrastructure/supabase/client';
 
-type Source = 'local' | 'r2' | 'shared' | null;
+type Source = 'local' | 'r2' | null;
 
 interface LibraryState {
-  /** Adapter prêt (dossier LOCAL choisi) ou null (mode partagé/dégradé). */
+  /** Adapter prêt (dossier local OU bibliothèque R2 en ligne). */
   adapter: FileSystemPort | null;
   songs: LibrarySong[];
   ready: boolean;
   busy: boolean;
   error: string | null;
-  /** D'où viennent les chants affichés : dossier local, ou index partagé (Supabase). */
+  /** D'où viennent les chants affichés : dossier local, ou bibliothèque R2 (permanente, en ligne). */
   source: Source;
-  publishing: boolean;
-  publishError: string | null;
   /**
    * Réutilise silencieusement le dossier local mémorisé si l'accès est déjà
-   * accordé ; sinon, replie sur l'index PARTAGÉ (noms de fichiers .pro publiés
-   * par quiconque a le dossier connecté) — pas besoin de reconnecter à chaque
-   * fois pour simplement chercher/lier un chant.
+   * accordé ; sinon, se connecte à la bibliothèque R2 (permanente, en ligne,
+   * pas besoin de dossier local pour l'utiliser — recherche ET export
+   * .proPlaylist fonctionnent).
    */
   restore: () => Promise<void>;
   /** Connexion par geste : réutilise le dossier mémorisé (ré-autorisation) ou ouvre le sélecteur. */
   connect: () => Promise<void>;
   /** Indexation depuis des fichiers (<input webkitdirectory>) — Brave / Firefox. */
   connectFiles: (files: File[]) => void;
-  /** Publie la liste de noms (dossier LOCAL connecté) vers l'index partagé. */
-  publish: () => Promise<void>;
 }
 
 // Sélection de dossier disponible partout via <input webkitdirectory>.
@@ -58,31 +52,6 @@ function indexAndSet(
   });
 }
 
-/**
- * Replis distants, dans l'ordre : R2 (bucket partagé, adapter complet — la
- * recherche ET l'export .proPlaylist fonctionnent sans dossier local), puis
- * l'index Supabase (noms seulement, pas d'export possible).
- */
-async function fallbackRemote(set: (p: Partial<LibraryState>) => void) {
-  try {
-    const r2 = await R2Adapter.connect();
-    if (r2) {
-      indexAndSet(set, r2, 'r2');
-      return;
-    }
-  } catch {
-    /* silencieux : on retombe sur l'index partagé (noms seulement) */
-  }
-
-  if (!isSupabaseConfigured) return;
-  try {
-    const songs = await fetchLibraryIndex();
-    if (songs.length > 0) set({ songs, source: 'shared', ready: true });
-  } catch {
-    /* silencieux : reste en mode dégradé (aucune bibliothèque) */
-  }
-}
-
 export const useLibrary = create<LibraryState>((set, getState) => ({
   adapter: null,
   songs: [],
@@ -90,8 +59,6 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
   busy: false,
   error: null,
   source: null,
-  publishing: false,
-  publishError: null,
 
   async restore() {
     if (getState().ready) return;
@@ -102,9 +69,14 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
         return;
       }
     } catch {
-      /* silencieux : on retombe sur l'index partagé */
+      /* silencieux : on retombe sur la bibliothèque R2 */
     }
-    await fallbackRemote(set);
+    try {
+      const r2 = await R2Adapter.connect();
+      if (r2) indexAndSet(set, r2, 'r2');
+    } catch {
+      /* silencieux : reste en mode dégradé (aucune bibliothèque) */
+    }
   },
 
   async connect() {
@@ -122,17 +94,5 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
 
   connectFiles(files: File[]) {
     indexAndSet(set, new DirectoryInputAdapter(files));
-  },
-
-  async publish() {
-    const { songs, source } = getState();
-    if (source !== 'local' || songs.length === 0) return;
-    set({ publishing: true, publishError: null });
-    try {
-      await publishLibraryIndex(songs);
-      set({ publishing: false });
-    } catch (e) {
-      set({ publishing: false, publishError: e instanceof Error ? e.message : 'Erreur inconnue.' });
-    }
   },
 }));
