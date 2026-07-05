@@ -11,7 +11,7 @@ let client: S3Client | null = null;
 
 export function isR2Configured(): boolean {
   return !!(
-    process.env.R2_ACCOUNT_ID &&
+    process.env.R2_ENDPOINT &&
     process.env.R2_ACCESS_KEY_ID &&
     process.env.R2_SECRET_ACCESS_KEY &&
     R2_BUCKET
@@ -22,7 +22,7 @@ export function getR2Client(): S3Client {
   if (!client) {
     client = new S3Client({
       region: "auto",
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: process.env.R2_ENDPOINT,
       credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID!,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
