@@ -64,7 +64,10 @@ export const useLibrary = create<LibraryState>((set, getState) => ({
     if (getState().ready) return;
     try {
       const adapter = await FileSystemAccessAdapter.restoreSilent();
-      if (adapter) {
+      // Un dossier mémorisé mais VIDE ou périmé (déplacé, renommé…) ne doit
+      // pas bloquer le repli sur R2 — seul un dossier avec de vrais fichiers
+      // .pro compte comme une bibliothèque locale utilisable.
+      if (adapter && adapter.listPresentations().length > 0) {
         indexAndSet(set, adapter);
         return;
       }
