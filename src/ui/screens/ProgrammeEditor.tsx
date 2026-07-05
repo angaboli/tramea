@@ -160,6 +160,7 @@ function ItemRow({
                   titre: item.titre,
                   baseProFile: item.customSong.baseProFile,
                   slides: item.customSong.slides,
+                  groups: item.customSong.groups,
                 }
               : { titre: item.titre }
           }
@@ -168,7 +169,7 @@ function ItemRow({
           onSave={(v) =>
             updateItem(sectionId, item.id, {
               titre: v.titre,
-              customSong: { baseProFile: v.baseProFile, slides: v.slides },
+              customSong: { baseProFile: v.baseProFile, slides: v.slides, groups: v.groups },
             })
           }
         />
@@ -632,25 +633,41 @@ export function ProgrammeEditor({
     return (programme.titre || "programme").replace(/[\\/:*?"<>|]/g, "-");
   }
 
-  async function gatherLyrics(): Promise<Record<string, string[]> | undefined> {
-    const fs = library.adapter;
-    if (!includeLyrics || !fs) return undefined;
-    const { extractLyrics } =
-      await import("../../infrastructure/proplaylist/extractLyrics");
-    const files = [
-      ...new Set(
-        programme.sections
-          .flatMap((s) => s.items)
-          .map((i) => i.proFile)
-          .filter(Boolean) as string[],
-      ),
-    ];
-    const out: Record<string, string[]> = {};
-    for (const name of files) {
-      const res = await fs.resolvePresentation(name);
-      if (res) out[name] = extractLyrics(res.bytes);
+  async function gatherLyrics() {
+    if (!includeLyrics) return undefined;
+    const items = programme.sections.flatMap((s) => s.items);
+    const out: Record<string, import("../../infrastructure/proplaylist/extractGroupedLyrics").LyricGroup[]> = {};
+
+    // Chants personnalisés (medley / verset / texte) : paroles déjà connues
+    // (saisies dans le dialogue), aucun fichier à lire pour elles.
+    for (const it of items) {
+      const cs = it.customSong;
+      if (!cs?.slides.length) continue;
+      const groups = cs.slides
+        .map((text, i) => ({ groupe: cs.groups?.[i], lignes: text.split("\n").filter(Boolean) }))
+        .filter((g) => g.lignes.length > 0);
+      if (groups.length) out[it.id] = groups;
     }
-    return out;
+
+    // Chants réels de la bibliothèque : lecture + décodage groupé du .pro
+    // (Couplet/Refrain…), avec repli sur un texte simple si pas de groupes.
+    const fs = library.adapter;
+    if (fs) {
+      const { extractGroupedLyrics } = await import("../../infrastructure/proplaylist/extractGroupedLyrics");
+      const cache = new Map<string, ReturnType<typeof extractGroupedLyrics>>();
+      for (const it of items) {
+        if (!it.proFile || out[it.id]) continue;
+        let groups = cache.get(it.proFile);
+        if (!groups) {
+          const res = await fs.resolvePresentation(it.proFile);
+          groups = res ? extractGroupedLyrics(res.bytes) : [];
+          cache.set(it.proFile, groups);
+        }
+        if (groups.length) out[it.id] = groups;
+      }
+    }
+
+    return Object.keys(out).length ? out : undefined;
   }
 
   async function onPdf() {

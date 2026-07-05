@@ -24,8 +24,12 @@ export interface TrameItem {
   /**
    * Chant personnalisé / medley : généré en clonant `baseProFile` et en
    * remplaçant le texte des diapos par `slides` (un texte par diapo).
+   * `groups` (optionnel, même longueur que `slides`) : étiquette de groupe
+   * par diapo (« Couplet 1 », « Refrain »…) saisie à la création — sert à
+   * l'affichage groupé des paroles, comme pour un chant réel de la
+   * bibliothèque. N'affecte pas la structure ProPresenter du fichier généré.
    */
-  customSong?: { baseProFile: string; slides: string[] };
+  customSong?: { baseProFile: string; slides: string[]; groups?: (string | undefined)[] };
 }
 
 export interface Section {
