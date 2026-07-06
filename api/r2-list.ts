@@ -5,7 +5,7 @@
  * identifiant exposé : le client ne reçoit que la liste des clés.
  */
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { getR2Client, isR2Configured, R2_BUCKET } from "./_r2Client";
+import { getR2Client, isR2Configured, R2_BUCKET } from "../lib/r2Client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
