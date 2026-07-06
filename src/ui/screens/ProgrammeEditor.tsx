@@ -579,6 +579,7 @@ export function ProgrammeEditor({
     missingMedia: string[];
   } | null>(null);
   const [includeLyrics, setIncludeLyrics] = useState(false);
+  const [pdfFont, setPdfFont] = useState<"segoe" | "libre-franklin">("segoe");
   const dirInputRef = useRef<HTMLInputElement | null>(null);
   const missing = missingProFiles(programme).length;
   const isTrame = mode === "trame";
@@ -685,7 +686,7 @@ export function ProgrammeEditor({
       // pdf-lib est lourd : chargé à la demande (code-splitting).
       const { buildProgrammePdf } =
         await import("../../infrastructure/pdf/buildProgrammePdf");
-      const bytes = await buildProgrammePdf(programme, { lyrics });
+      const bytes = await buildProgrammePdf(programme, { lyrics, font: pdfFont });
       downloadBytes(bytes, `${safeName()} - ${programme.date}.pdf`);
     } catch {
       setStatus("Erreur lors de la génération du PDF.");
@@ -973,6 +974,19 @@ export function ProgrammeEditor({
                 onChange={(e) => setIncludeLyrics(e.target.checked)}
               />
               Inclure les paroles des chants (depuis la bibliothèque)
+            </label>
+            <label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
+              Police du PDF
+              <select
+                className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
+                value={pdfFont}
+                onChange={(e) =>
+                  setPdfFont(e.target.value as "segoe" | "libre-franklin")
+                }
+              >
+                <option value="segoe">Segoe UI (historique)</option>
+                <option value="libre-franklin">Libre Franklin</option>
+              </select>
             </label>
             {includeLyrics && !library.adapter && (
               <div className="flex items-center justify-center gap-2">
