@@ -3,7 +3,7 @@
  * serveur→serveur : évite d'exposer les identifiants R2 au navigateur.
  */
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getR2Client, isR2Configured, R2_BUCKET } from "../lib/r2Client";
+import { getR2Client, isR2Configured, R2_BUCKET } from "../lib/r2Client.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
