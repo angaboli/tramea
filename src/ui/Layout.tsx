@@ -1,8 +1,10 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { Badge } from './components/Badge';
 import { Button } from './components/Button';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useSession } from './stores/session';
+import { canCreateProgramme, canCreateTrame, canManageUsers } from '../domain/auth/access';
 
 const ROLE_LABEL: Record<string, string> = {
   basic: 'Basique',
@@ -28,27 +30,83 @@ function Logo() {
   );
 }
 
+const IconHome = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" />
+  </svg>
+);
+const IconDoc = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+  </svg>
+);
+const IconLayers = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3 3 8l9 5 9-5-9-5z" /><path d="m3 13 9 5 9-5M3 18l9 5 9-5" />
+  </svg>
+);
+const IconUsers = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11" />
+  </svg>
+);
+
+function NavItem({ to, icon, label, active }: { to: string; icon: ReactNode; label: string; active: boolean }) {
+  return (
+    <Link
+      to={to}
+      className={[
+        'flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors',
+        active
+          ? 'bg-primary-soft text-primary-soft-text'
+          : 'text-text-secondary hover:bg-surface-hover hover:text-text',
+      ].join(' ')}
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
 export function Layout() {
   const { session, signOut } = useSession();
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <header className="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
+    <div className="flex min-h-screen bg-bg text-text">
+      <aside className="flex w-64 shrink-0 flex-col gap-1 border-r border-border bg-surface p-4">
+        <div className="mb-6 px-1">
           <Logo />
-          <div className="flex items-center gap-3">
-            {session?.role && (
-              <Badge tone="primary" className="hidden sm:inline-flex">
-                {ROLE_LABEL[session.role] ?? session.role}
-              </Badge>
-            )}
+        </div>
+        <NavItem to="/creator" icon={IconHome} label="Tableau de bord" active={pathname === '/creator'} />
+        {canCreateProgramme(session) && (
+          <NavItem to="/programme" icon={IconDoc} label="Programme" active={pathname === '/programme'} />
+        )}
+        {canCreateTrame(session) && (
+          <NavItem to="/trame" icon={IconLayers} label="Trame" active={pathname === '/trame'} />
+        )}
+        {canManageUsers(session) && (
+          <NavItem to="/admin" icon={IconUsers} label="Utilisateurs" active={pathname === '/admin'} />
+        )}
+
+        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-4">
+          {session?.role && (
+            <Badge tone="primary" className="w-fit">
+              {ROLE_LABEL[session.role] ?? session.role}
+            </Badge>
+          )}
+          <div className="flex items-center justify-between gap-2">
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => signOut()}>
               Déconnexion
             </Button>
           </div>
         </div>
-      </header>
-      <Outlet />
+      </aside>
+      <div className="min-w-0 flex-1">
+        <Outlet />
+      </div>
     </div>
   );
 }
