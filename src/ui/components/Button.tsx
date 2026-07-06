@@ -9,11 +9,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   full?: boolean;
 }
 
+// primary/accent : léger zoom tactile au survol/clic (repris du système Stitch).
 const variants: Record<Variant, string> = {
   primary:
-    'bg-primary text-text-inverse hover:bg-primary-hover active:bg-primary-active',
+    'bg-primary text-text-inverse hover:bg-primary-hover active:bg-primary-active hover:scale-[1.02] active:scale-[0.98]',
   accent:
-    'bg-accent text-text-inverse hover:bg-accent-hover active:bg-accent-active',
+    'bg-accent text-text-inverse hover:bg-accent-hover active:bg-accent-active hover:scale-[1.02] active:scale-[0.98]',
   secondary:
     'bg-surface text-text border border-border-strong hover:bg-surface-hover',
   ghost: 'bg-transparent text-text-secondary hover:bg-surface-hover',
@@ -38,7 +39,7 @@ export function Button({
     <button
       className={[
         'inline-flex items-center justify-center gap-2 rounded-md font-semibold',
-        'transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+        'transition-all disabled:opacity-50 disabled:cursor-not-allowed',
         'focus-visible:shadow-focus focus-visible:outline-none',
         variants[variant],
         sizes[size],
