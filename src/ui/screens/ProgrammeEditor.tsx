@@ -20,7 +20,8 @@ import {
 } from "../../domain/trame/recurring";
 import { SECTION_DEFAULT_ITEMS } from "../../domain/trame/sectionDefaults";
 import { findSongByExactName } from "../../domain/library/song";
-import type { Section, TrameItem } from "../../domain/trame/types";
+import type { Programme, Section, TrameItem } from "../../domain/trame/types";
+import { formatFrDate } from "../../domain/trame/formatDate";
 import { exportProplaylist } from "../../application/usecases/exportProplaylist";
 import { programmeToExportItems } from "../../application/usecases/programmeToExportItems";
 import { downloadBytes } from "../lib/download";
@@ -562,6 +563,54 @@ function SectionCard({
   );
 }
 
+/**
+ * Aperçu — mime visuellement la feuille de culte (bandeau + liste), mais
+ * reflète directement `programme` (état réel, pas de rendu du binaire PDF) :
+ * se met à jour instantanément à chaque modification, sans recalcul coûteux.
+ * N'affiche que des champs qui existent réellement (pas de durée inventée).
+ */
+function PdfPreview({ programme }: { programme: Programme }) {
+  return (
+    <div className="sticky top-6 rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <h2 className="mb-3 text-sm font-semibold text-text-secondary">Aperçu</h2>
+      <div className="aspect-[1/1.414] overflow-y-auto rounded-lg border border-border-strong bg-white p-4 text-[11px] text-slate-800">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          Église Adventiste · Lille
+        </p>
+        <p className="mt-1 text-center text-sm font-bold">
+          {programme.titre || "Sans titre"}
+        </p>
+        <p className="text-center text-[10px] text-slate-500">
+          {formatFrDate(programme.date)}
+        </p>
+        <div className="mt-3 flex flex-col gap-2.5">
+          {programme.sections.map((s) => (
+            <div key={s.id}>
+              <p className="border-b border-slate-300 pb-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                {s.label}
+              </p>
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {s.items.map((it) => (
+                  <li key={it.id} className="flex justify-between gap-2 truncate">
+                    <span className="truncate">{it.titre || "—"}</span>
+                    {it.ref && <span className="shrink-0 text-slate-400">{it.ref}</span>}
+                  </li>
+                ))}
+                {s.items.length === 0 && (
+                  <li className="italic text-slate-400">Section vide</li>
+                )}
+              </ul>
+            </div>
+          ))}
+          {programme.sections.length === 0 && (
+            <p className="italic text-slate-400">Ajoutez une section pour voir l'aperçu.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProgrammeEditor({
   mode = "programme",
 }: {
@@ -730,7 +779,8 @@ export function ProgrammeEditor({
   }
 
   return (
-    <main className="mx-auto max-w-5xl xl:max-w-5xl px-4 py-8 sm:px-8">
+    <div className="mx-auto flex max-w-6xl gap-6 px-4 py-8 sm:px-8">
+    <main className="min-w-0 flex-1">
       <Link
         to="/creator"
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-text-secondary hover:text-text"
@@ -1030,5 +1080,11 @@ export function ProgrammeEditor({
         )}
       </div>
     </main>
+    {!isTrame && (
+      <aside className="hidden w-72 shrink-0 lg:block">
+        <PdfPreview programme={programme} />
+      </aside>
+    )}
+    </div>
   );
 }
