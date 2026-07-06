@@ -89,22 +89,17 @@ export function Layout() {
         {canManageUsers(session) && (
           <NavItem to="/admin" icon={IconUsers} label="Utilisateurs" active={pathname === '/admin'} />
         )}
-
-        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-4">
-          {session?.role && (
-            <Badge tone="primary" className="w-fit">
-              {ROLE_LABEL[session.role] ?? session.role}
-            </Badge>
-          )}
-          <div className="flex items-center justify-between gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={() => signOut()}>
-              Déconnexion
-            </Button>
-          </div>
-        </div>
       </aside>
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-end gap-3 border-b border-border bg-surface/60 px-6 py-3">
+          {session?.role && (
+            <Badge tone="primary">{ROLE_LABEL[session.role] ?? session.role}</Badge>
+          )}
+          <ThemeToggle />
+          <Button variant="ghost" size="sm" onClick={() => signOut()}>
+            Déconnexion
+          </Button>
+        </header>
         <Outlet />
       </div>
     </div>
