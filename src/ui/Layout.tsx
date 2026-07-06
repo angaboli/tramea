@@ -1,6 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { Badge } from './components/Badge';
 import { Button } from './components/Button';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useSession } from './stores/session';
@@ -69,6 +68,22 @@ function NavItem({ to, icon, label, active }: { to: string; icon: ReactNode; lab
   );
 }
 
+function UserBadge({ email, role }: { email: string; role: string | null }) {
+  const name = email.split('@')[0] || email;
+  const initial = name.charAt(0).toUpperCase();
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary-soft-text">
+        {initial}
+      </span>
+      <div className="hidden leading-tight sm:block">
+        <div className="truncate text-sm font-semibold capitalize">{name}</div>
+        {role && <div className="text-xs text-text-muted">{ROLE_LABEL[role] ?? role}</div>}
+      </div>
+    </div>
+  );
+}
+
 export function Layout() {
   const { session, signOut } = useSession();
   const { pathname } = useLocation();
@@ -91,14 +106,12 @@ export function Layout() {
         )}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-end gap-3 border-b border-border bg-surface/60 px-6 py-3">
-          {session?.role && (
-            <Badge tone="primary">{ROLE_LABEL[session.role] ?? session.role}</Badge>
-          )}
+        <header className="flex items-center justify-end gap-4 border-b border-border bg-surface/60 px-6 py-3">
           <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={() => signOut()}>
             Déconnexion
           </Button>
+          {session?.email && <UserBadge email={session.email} role={session.role} />}
         </header>
         <Outlet />
       </div>
