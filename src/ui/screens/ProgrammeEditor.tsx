@@ -827,9 +827,36 @@ export function ProgrammeEditor({
       >
         ← Tableau de bord
       </Link>
-      <h1 className="mb-1 text-2xl font-extrabold tracking-tight">
-        {isTrame ? "Éditeur de trame" : "Éditeur de programme"}
-      </h1>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          {isTrame ? "Éditeur de trame" : "Éditeur de programme"}
+        </h1>
+        {!isTrame && (
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              Police du PDF
+              <select
+                className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
+                value={pdfFont}
+                onChange={(e) =>
+                  setPdfFont(e.target.value as "segoe" | "libre-franklin")
+                }
+              >
+                <option value="segoe">Segoe UI (historique)</option>
+                <option value="libre-franklin">Libre Franklin</option>
+              </select>
+            </label>
+            <Button
+              variant={previewOn ? "primary" : "ghost"}
+              size="sm"
+              onClick={() => setShowPreview((v) => !v)}
+              title="Aperçu en temps réel, identique au PDF téléchargé"
+            >
+              {previewOn ? "Masquer l'aperçu" : "Afficher l'aperçu"}
+            </Button>
+          </div>
+        )}
+      </div>
       <p className="mb-4 text-sm text-text-secondary">
         {programme.sections.length} section(s) · {countSongs(programme)}{" "}
         chant(s)
@@ -1065,19 +1092,6 @@ export function ProgrammeEditor({
               />
               Inclure les paroles des chants (depuis la bibliothèque)
             </label>
-            <label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
-              Police du PDF
-              <select
-                className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
-                value={pdfFont}
-                onChange={(e) =>
-                  setPdfFont(e.target.value as "segoe" | "libre-franklin")
-                }
-              >
-                <option value="segoe">Segoe UI (historique)</option>
-                <option value="libre-franklin">Libre Franklin</option>
-              </select>
-            </label>
             {includeLyrics && !library.adapter && (
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs text-text-muted">
@@ -1103,23 +1117,14 @@ export function ProgrammeEditor({
                 />
               </div>
             )}
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                full
-                disabled={programme.sections.length === 0}
-                onClick={onPdf}
-              >
-                Télécharger le PDF
-              </Button>
-              <Button
-                variant={previewOn ? "primary" : "ghost"}
-                onClick={() => setShowPreview((v) => !v)}
-                title="Aperçu en temps réel, identique au PDF téléchargé"
-              >
-                {previewOn ? "Masquer l'aperçu" : "Afficher l'aperçu"}
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              full
+              disabled={programme.sections.length === 0}
+              onClick={onPdf}
+            >
+              Télécharger le PDF
+            </Button>
           </div>
         )}
         {status && (
