@@ -60,14 +60,26 @@ const SECTION_H = 22;
 const HEADER_H = 46;
 
 
-async function loadFonts(doc: PDFDocument) {
+/** Police du PDF exporté : Segoe UI (historique) ou Libre Franklin (système Stitch). */
+export type PdfFontChoice = "segoe" | "libre-franklin";
+
+const FONT_FILES: Record<PdfFontChoice, { reg: string; bold: string }> = {
+  segoe: { reg: "/fonts/SegoeUI.ttf", bold: "/fonts/SegoeUI-Bold.ttf" },
+  "libre-franklin": {
+    reg: "/fonts/LibreFranklin.ttf",
+    bold: "/fonts/LibreFranklin-Bold.ttf",
+  },
+};
+
+async function loadFonts(doc: PDFDocument, choice: PdfFontChoice = "segoe") {
   try {
     doc.registerFontkit(fontkit);
+    const files = FONT_FILES[choice];
     const [reg, bold] = await Promise.all([
-      fetch("/fonts/SegoeUI.ttf").then((r) =>
+      fetch(files.reg).then((r) =>
         r.ok ? r.arrayBuffer() : Promise.reject(new Error()),
       ),
-      fetch("/fonts/SegoeUI-Bold.ttf").then((r) =>
+      fetch(files.bold).then((r) =>
         r.ok ? r.arrayBuffer() : Promise.reject(new Error()),
       ),
     ]);
@@ -122,6 +134,8 @@ export interface PdfOptions {
    * modèle et ne doivent pas se marcher dessus).
    */
   lyrics?: Record<string, LyricGroup[]>;
+  /** Police du PDF : "segoe" (historique, par défaut) ou "libre-franklin". */
+  font?: PdfFontChoice;
 }
 
 export async function buildProgrammePdf(
@@ -129,7 +143,7 @@ export async function buildProgrammePdf(
   opts: PdfOptions = {},
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const { font, bold, custom } = await loadFonts(doc);
+  const { font, bold, custom } = await loadFonts(doc, opts.font);
   const logo = await loadLogo(doc);
   const S = custom ? (s: string) => s : sanitizeWinAnsi;
 
