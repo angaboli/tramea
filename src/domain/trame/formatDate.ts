@@ -11,3 +11,15 @@ export function formatFrDate(iso: string | undefined | null): string {
   if (!m) return iso ?? '';
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
+
+/**
+ * Prochain samedi (jour du sabbat) en ISO — celui de la semaine en cours si
+ * on n'y est pas encore, sinon aujourd'hui même si on est déjà samedi.
+ * Sert de date par défaut à la création d'un programme/trame.
+ */
+export function nextSaturday(from: Date = new Date()): string {
+  const d = new Date(from);
+  const daysToAdd = (6 - d.getDay() + 7) % 7; // getDay() : 0=dimanche … 6=samedi
+  d.setDate(d.getDate() + daysToAdd);
+  return d.toISOString().slice(0, 10);
+}

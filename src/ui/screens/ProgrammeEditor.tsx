@@ -25,6 +25,7 @@ import type { Section, TrameItem } from "../../domain/trame/types";
 import { exportProplaylist } from "../../application/usecases/exportProplaylist";
 import { programmeToExportItems } from "../../application/usecases/programmeToExportItems";
 import { downloadBytes } from "../lib/download";
+import { usePersistedState } from "../lib/usePersistedState";
 
 // Trame : liste complète (séquence technique variée).
 const SECTION_PRESETS = [
@@ -612,9 +613,10 @@ export function ProgrammeEditor({
     missingPresentations: string[];
     missingMedia: string[];
   } | null>(null);
-  const [includeLyrics, setIncludeLyrics] = useState(false);
-  const [pdfFont, setPdfFont] = useState<"segoe" | "libre-franklin">("segoe");
-  const [showPreview, setShowPreview] = useState(false);
+  // Réglages d'export PDF : mémorisés (localStorage) d'une session à l'autre.
+  const [includeLyrics, setIncludeLyrics] = usePersistedState("pdf.includeLyrics", false);
+  const [pdfFont, setPdfFont] = usePersistedState<"segoe" | "libre-franklin">("pdf.font", "segoe");
+  const [showPreview, setShowPreview] = usePersistedState("pdf.showPreview", false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
@@ -985,12 +987,36 @@ export function ProgrammeEditor({
             <span className="text-sm font-semibold text-text-secondary">
               Titre / occasion
             </span>
-            <input
-              className={field}
-              placeholder="Sabbat 6 juin 2026"
-              value={programme.titre}
-              onChange={(e) => setMeta({ titre: e.target.value })}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                className={field}
+                placeholder="Sabbat 6 juin 2026"
+                value={programme.titre}
+                onChange={(e) => setMeta({ titre: e.target.value })}
+              />
+              {/* Couleur du bandeau de titre (PDF) — même mécanique que les sections. */}
+              <span
+                className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border"
+                title="Couleur du bandeau de titre"
+                style={{ backgroundColor: programme.titleColor || "#a3ccea" }}
+              >
+                <input
+                  type="color"
+                  aria-label="Couleur du bandeau de titre"
+                  value={programme.titleColor || "#a3ccea"}
+                  onChange={(e) => setMeta({ titleColor: e.target.value })}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+              </span>
+              {programme.titleColor && (
+                <IconBtn
+                  label="Couleur par défaut"
+                  onClick={() => setMeta({ titleColor: undefined })}
+                >
+                  ⟲
+                </IconBtn>
+              )}
+            </div>
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-text-secondary">
