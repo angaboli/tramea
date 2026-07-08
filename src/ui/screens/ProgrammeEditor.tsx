@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, type ReactNode } from "react";
+import { useState, useRef, useMemo, useEffect, type ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
@@ -20,8 +20,7 @@ import {
 } from "../../domain/trame/recurring";
 import { SECTION_DEFAULT_ITEMS } from "../../domain/trame/sectionDefaults";
 import { findSongByExactName } from "../../domain/library/song";
-import type { Programme, Section, TrameItem } from "../../domain/trame/types";
-import { formatFrDate } from "../../domain/trame/formatDate";
+import type { Section, TrameItem } from "../../domain/trame/types";
 import { exportProplaylist } from "../../application/usecases/exportProplaylist";
 import { programmeToExportItems } from "../../application/usecases/programmeToExportItems";
 import { downloadBytes } from "../lib/download";
@@ -564,48 +563,33 @@ function SectionCard({
 }
 
 /**
- * Aperçu — mime visuellement la feuille de culte (bandeau + liste), mais
- * reflète directement `programme` (état réel, pas de rendu du binaire PDF) :
- * se met à jour instantanément à chaque modification, sans recalcul coûteux.
- * N'affiche que des champs qui existent réellement (pas de durée inventée).
+ * Aperçu — copie CONFORME du PDF téléchargé : même fonction de génération
+ * (buildProgrammePdf), affichée via un blob URL dans une iframe (rendu PDF
+ * natif du navigateur), pas une approximation HTML. Recalculée avec un
+ * léger débounce pendant la frappe pour éviter de régénérer à chaque
+ * caractère (buildProgrammePdf + gatherLyrics ne sont pas gratuits).
  */
-function PdfPreview({ programme }: { programme: Programme }) {
+function PdfPreview({
+  url,
+  loading,
+}: {
+  url: string | null;
+  loading: boolean;
+}) {
   return (
-    <div className="sticky top-6 rounded-xl border border-border bg-surface p-4 shadow-sm">
-      <h2 className="mb-3 text-sm font-semibold text-text-secondary">Aperçu</h2>
-      <div className="aspect-[1/1.414] overflow-y-auto rounded-lg border border-border-strong bg-white p-4 text-[11px] text-slate-800">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-          Église Adventiste · Lille
-        </p>
-        <p className="mt-1 text-center text-sm font-bold">
-          {programme.titre || "Sans titre"}
-        </p>
-        <p className="text-center text-[10px] text-slate-500">
-          {formatFrDate(programme.date)}
-        </p>
-        <div className="mt-3 flex flex-col gap-2.5">
-          {programme.sections.map((s) => (
-            <div key={s.id}>
-              <p className="border-b border-slate-300 pb-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                {s.label}
-              </p>
-              <ul className="mt-1 flex flex-col gap-0.5">
-                {s.items.map((it) => (
-                  <li key={it.id} className="flex justify-between gap-2 truncate">
-                    <span className="truncate">{it.titre || "—"}</span>
-                    {it.ref && <span className="shrink-0 text-slate-400">{it.ref}</span>}
-                  </li>
-                ))}
-                {s.items.length === 0 && (
-                  <li className="italic text-slate-400">Section vide</li>
-                )}
-              </ul>
-            </div>
-          ))}
-          {programme.sections.length === 0 && (
-            <p className="italic text-slate-400">Ajoutez une section pour voir l'aperçu.</p>
-          )}
-        </div>
+    <div className="sticky top-6 flex h-[calc(100vh-3rem)] flex-col rounded-xl border border-border bg-surface p-3 shadow-sm">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-text-secondary">Aperçu (identique au PDF téléchargé)</h2>
+        {loading && <span className="text-xs text-text-muted">Mise à jour…</span>}
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border-strong bg-white">
+        {url ? (
+          <iframe title="Aperçu du PDF" src={url} className="h-full w-full" />
+        ) : (
+          <p className="p-4 text-center text-sm text-text-muted">
+            Ajoutez une section pour voir l'aperçu.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -629,6 +613,10 @@ export function ProgrammeEditor({
   } | null>(null);
   const [includeLyrics, setIncludeLyrics] = useState(false);
   const [pdfFont, setPdfFont] = useState<"segoe" | "libre-franklin">("segoe");
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewUrlRef = useRef<string | null>(null);
   const dirInputRef = useRef<HTMLInputElement | null>(null);
   const missing = missingProFiles(programme).length;
   const isTrame = mode === "trame";
@@ -728,6 +716,52 @@ export function ProgrammeEditor({
     return Object.keys(out).length ? out : undefined;
   }
 
+  // Aperçu = copie CONFORME du PDF téléchargé (même fonction de génération),
+  // recalculée avec un léger débounce pendant la frappe. Désactivé par
+  // défaut (activation explicite via le bouton) pour ne jamais régénérer le
+  // PDF sans que l'utilisateur l'ait demandé.
+  useEffect(() => {
+    if (isTrame || !showPreview) {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+        setPreviewUrl(null);
+      }
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const lyrics = await gatherLyrics();
+        const { buildProgrammePdf } =
+          await import("../../infrastructure/pdf/buildProgrammePdf");
+        const bytes = await buildProgrammePdf(programme, { lyrics, font: pdfFont });
+        if (cancelled) return;
+        const url = URL.createObjectURL(new Blob([bytes.slice()], { type: "application/pdf" }));
+        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = url;
+        setPreviewUrl(url);
+      } catch {
+        /* aperçu silencieusement indisponible ; le bouton de téléchargement reste la source fiable */
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    }, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programme, includeLyrics, pdfFont, showPreview, isTrame]);
+
+  // Libère l'URL du blob à la fermeture de l'écran.
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
   async function onPdf() {
     setStatus(null);
     try {
@@ -778,8 +812,14 @@ export function ProgrammeEditor({
     }
   }
 
+  const previewOn = showPreview && !isTrame;
   return (
-    <div className="mx-auto flex max-w-6xl gap-6 px-4 py-8 sm:px-8">
+    <div
+      className={[
+        "flex gap-6 px-4 py-8 sm:px-8",
+        previewOn ? "mx-auto max-w-[1600px]" : "mx-auto max-w-5xl",
+      ].join(" ")}
+    >
     <main className="min-w-0 flex-1">
       <Link
         to="/creator"
@@ -1063,14 +1103,23 @@ export function ProgrammeEditor({
                 />
               </div>
             )}
-            <Button
-              variant="secondary"
-              full
-              disabled={programme.sections.length === 0}
-              onClick={onPdf}
-            >
-              Télécharger le PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                full
+                disabled={programme.sections.length === 0}
+                onClick={onPdf}
+              >
+                Télécharger le PDF
+              </Button>
+              <Button
+                variant={previewOn ? "primary" : "ghost"}
+                onClick={() => setShowPreview((v) => !v)}
+                title="Aperçu en temps réel, identique au PDF téléchargé"
+              >
+                {previewOn ? "Masquer l'aperçu" : "Afficher l'aperçu"}
+              </Button>
+            </div>
           </div>
         )}
         {status && (
@@ -1080,9 +1129,9 @@ export function ProgrammeEditor({
         )}
       </div>
     </main>
-    {!isTrame && (
-      <aside className="hidden w-72 shrink-0 lg:block">
-        <PdfPreview programme={programme} />
+    {previewOn && (
+      <aside className="hidden w-[45%] shrink-0 lg:block">
+        <PdfPreview url={previewUrl} loading={previewLoading} />
       </aside>
     )}
     </div>
