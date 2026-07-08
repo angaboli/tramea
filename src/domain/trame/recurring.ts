@@ -18,6 +18,7 @@ export interface RecurringMoment {
 }
 
 export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
+  { label: 'École du sabbat', type: 'label', matchKeys: ['ecole du sabbat'] },
   { label: 'Prélude', type: 'label', matchKeys: ['prelude'] },
   { label: 'Bienvenue', type: 'label', matchKeys: ['bienvenue'] },
   { label: 'Entrée des officiants', type: 'label' },
