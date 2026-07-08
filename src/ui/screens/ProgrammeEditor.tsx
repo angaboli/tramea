@@ -579,10 +579,11 @@ export function ProgrammeEditor({
     missingPresentations: string[];
     missingMedia: string[];
   } | null>(null);
-  // Réglages d'export PDF : mémorisés (localStorage) d'une session à l'autre.
-  const [includeLyrics, setIncludeLyrics] = usePersistedState("pdf.includeLyrics", false);
+  // Réglages d'export PDF : activés par défaut (paroles + aperçu visibles
+  // dès l'ouverture), puis mémorisés (localStorage) d'une session à l'autre.
+  const [includeLyrics, setIncludeLyrics] = usePersistedState("pdf.includeLyrics", true);
   const [pdfFont, setPdfFont] = usePersistedState<"segoe" | "libre-franklin">("pdf.font", "segoe");
-  const [showPreview, setShowPreview] = usePersistedState("pdf.showPreview", false);
+  const [showPreview, setShowPreview] = usePersistedState("pdf.showPreview", true);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
