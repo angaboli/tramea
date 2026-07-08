@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Badge } from "../components/Badge";
+import { Switch } from "../components/Switch";
 import { useProgrammeEditor } from "../stores/programmeEditor";
 import { useSession } from "../stores/session";
 import {
@@ -833,14 +834,11 @@ export function ProgrammeEditor({
         </h1>
         {!isTrame && (
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-text-secondary">
-              <input
-                type="checkbox"
-                checked={includeLyrics}
-                onChange={(e) => setIncludeLyrics(e.target.checked)}
-              />
-              Inclure les paroles des chants
-            </label>
+            <Switch
+              checked={includeLyrics}
+              onChange={setIncludeLyrics}
+              label="Inclure les paroles des chants"
+            />
             <label className="flex items-center gap-2 text-sm text-text-secondary">
               Police du PDF
               <select
