@@ -5,7 +5,7 @@ import { Badge } from './Badge';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { searchProgrammes } from '../../domain/trame/searchProgrammes';
-import { formatFrDate } from '../../domain/trame/formatDate';
+import { formatFrDate, nextSaturday } from '../../domain/trame/formatDate';
 import { buildTrameTemplate } from '../../domain/trame/trameTemplate';
 import { RECURRING_MOMENTS } from '../../domain/trame/recurring';
 import { findSongByExactName } from '../../domain/library/song';
@@ -60,8 +60,7 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
   // déjà en place, avec leur .pro pré-lié si la bibliothèque connectée en a un
   // qui correspond ; les chants restent des emplacements VIDES à remplir.
   function fromScratch() {
-    const today = new Date().toISOString().slice(0, 10);
-    const base = buildTrameTemplate(today);
+    const base = buildTrameTemplate(nextSaturday(), 'Sabbat');
     const p: Programme = {
       ...base,
       sections: base.sections.map((s) => ({

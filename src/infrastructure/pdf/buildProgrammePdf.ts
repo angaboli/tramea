@@ -297,12 +297,13 @@ export async function buildProgrammePdf(
   const dateTxt = formatFrDate(programme.date);
   const t = programme.titre?.trim() || "";
   const occasion = !t ? dateTxt : t.includes(dateTxt) ? t : `${t} ${dateTxt}`;
-  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: HEADER_BG });
+  const titleBandColor = hexColor(programme.titleColor) ?? HEADER_BG;
+  page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, color: titleBandColor });
   page.drawRectangle({ x: M, y: y - HEADER_H, width: RIGHT - M, height: HEADER_H, borderColor: BORDER, borderWidth: 0.6 });
   const tSize = 15;
   const titleTxt = fit(occasion, bold, tSize, RIGHT - M - 24);
   const tW = bold.widthOfTextAtSize(titleTxt, tSize);
-  page.drawText(titleTxt, { x: M + (RIGHT - M - tW) / 2, y: y - HEADER_H / 2 - tSize / 2 + 1, size: tSize, font: bold, color: INK });
+  page.drawText(titleTxt, { x: M + (RIGHT - M - tW) / 2, y: y - HEADER_H / 2 - tSize / 2 + 1, size: tSize, font: bold, color: readableInk(titleBandColor) });
   y -= HEADER_H;
 
   // Sections + lignes

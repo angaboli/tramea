@@ -2,12 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ItemType, Programme, TrameItem } from '../../domain/trame/types';
 import * as edit from '../../domain/trame/edit';
+import { nextSaturday } from '../../domain/trame/formatDate';
 
 interface EditorState {
   programme: Programme;
   reset: (date?: string, titre?: string, kind?: Programme['kind']) => void;
   load: (p: Programme) => void;
-  setMeta: (patch: Partial<Pick<Programme, 'titre' | 'date'>>) => void;
+  setMeta: (patch: Partial<Pick<Programme, 'titre' | 'date' | 'titleColor'>>) => void;
   addSection: (label: string) => void;
   renameSection: (id: string, label: string) => void;
   setSectionColor: (id: string, color: string | undefined) => void;
@@ -25,14 +26,14 @@ interface EditorState {
   moveItemToSection: (fromSectionId: string, itemId: string, toSectionId: string) => void;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-
 export const useProgrammeEditor = create<EditorState>()(
   persist(
     (set) => ({
-      programme: edit.emptyProgramme(today()),
+      programme: edit.emptyProgramme(nextSaturday(), 'Sabbat'),
 
-      reset: (date = today(), titre = '', kind: Programme['kind'] = 'programme') =>
+      // Nouveau programme/trame : "Sabbat" le prochain samedi par défaut —
+      // le cas d'usage réel quasi systématique, à ajuster au besoin.
+      reset: (date = nextSaturday(), titre = 'Sabbat', kind: Programme['kind'] = 'programme') =>
         set({ programme: edit.emptyProgramme(date, titre, kind) }),
       load: (p) => set({ programme: p }),
       setMeta: (patch) => set((s) => ({ programme: { ...s.programme, ...patch } })),

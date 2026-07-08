@@ -54,6 +54,8 @@ export interface Programme {
    * Optionnel pour compat. ascendante (absent ⇒ programme).
    */
   kind?: 'programme' | 'trame';
+  /** Couleur du bandeau d'en-tête (titre) sur le PDF. Absent ⇒ couleur par défaut. */
+  titleColor?: string;
 }
 
 /**
