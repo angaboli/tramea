@@ -832,7 +832,15 @@ export function ProgrammeEditor({
           {isTrame ? "Éditeur de trame" : "Éditeur de programme"}
         </h1>
         {!isTrame && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              <input
+                type="checkbox"
+                checked={includeLyrics}
+                onChange={(e) => setIncludeLyrics(e.target.checked)}
+              />
+              Inclure les paroles des chants
+            </label>
             <label className="flex items-center gap-2 text-sm text-text-secondary">
               Police du PDF
               <select
@@ -1084,14 +1092,6 @@ export function ProgrammeEditor({
           </>
         ) : (
           <div className="flex flex-col gap-2">
-            <label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
-              <input
-                type="checkbox"
-                checked={includeLyrics}
-                onChange={(e) => setIncludeLyrics(e.target.checked)}
-              />
-              Inclure les paroles des chants (depuis la bibliothèque)
-            </label>
             {includeLyrics && !library.adapter && (
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs text-text-muted">
