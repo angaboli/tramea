@@ -983,18 +983,24 @@ export function ProgrammeEditor({
 
       <Card className="mb-5">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-text-secondary">
               Titre / occasion
             </span>
             <div className="flex items-center gap-2">
-              <input
-                className={field}
-                placeholder="Sabbat 6 juin 2026"
-                value={programme.titre}
-                onChange={(e) => setMeta({ titre: e.target.value })}
-              />
-              {/* Couleur du bandeau de titre (PDF) — même mécanique que les sections. */}
+              <label className="flex-1">
+                <input
+                  className={field}
+                  placeholder="Sabbat 6 juin 2026"
+                  value={programme.titre}
+                  onChange={(e) => setMeta({ titre: e.target.value })}
+                />
+              </label>
+              {/* Couleur du bandeau de titre (PDF) — même mécanique que les sections ;
+                  HORS du <label> ci-dessus : un <label> ne doit envelopper qu'UN
+                  seul champ, sinon le focus/clic devient imprévisible selon le
+                  navigateur (la sélection de couleur restait "active" et bloquait
+                  la page). */}
               <span
                 className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border"
                 title="Couleur du bandeau de titre"
@@ -1017,7 +1023,7 @@ export function ProgrammeEditor({
                 </IconBtn>
               )}
             </div>
-          </label>
+          </div>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-text-secondary">
               Date
