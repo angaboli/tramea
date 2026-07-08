@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Badge } from "../components/Badge";
 import { Switch } from "../components/Switch";
+import { ColorPicker } from "../components/ColorPicker";
 import { useProgrammeEditor } from "../stores/programmeEditor";
 import { useSession } from "../stores/session";
 import {
@@ -199,34 +200,13 @@ function ItemRow({
         </button>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-1">
           {/* Couleur du titre (optionnelle) : répercutée sur le PDF. */}
-          <span
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface"
-            title="Couleur du titre"
-          >
-            <span
-              className="h-4 w-4 rounded-full border border-border"
-              style={{ backgroundColor: item.color || "#1a1f29" }}
-            />
-            <input
-              type="color"
-              aria-label="Couleur du titre"
-              value={item.color || "#1a1f29"}
-              onChange={(e) =>
-                updateItem(sectionId, item.id, { color: e.target.value })
-              }
-              className="absolute inset-0 cursor-pointer opacity-0"
-            />
-          </span>
-          {item.color && (
-            <IconBtn
-              label="Couleur par défaut"
-              onClick={() =>
-                updateItem(sectionId, item.id, { color: undefined })
-              }
-            >
-              ⟲
-            </IconBtn>
-          )}
+          <ColorPicker
+            label="Couleur du titre"
+            value={item.color}
+            defaultValue="#1a1f29"
+            onChange={(color) => updateItem(sectionId, item.id, { color })}
+            onReset={() => updateItem(sectionId, item.id, { color: undefined })}
+          />
           {/* Lier un .pro : toujours visible (programme ET trame). Ne pas le
               cacher derrière `libraryReady` — sinon l'option disparaît sans
               explication tant que le dossier n'est pas (re)connecté après un
@@ -455,27 +435,13 @@ function SectionCard({
         />
         <div className="flex shrink-0 items-center gap-1">
           {/* Couleur de la bande de section (PDF). */}
-          <span
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border"
-            title="Couleur de la bande"
-            style={{ backgroundColor: section.color || "#e8a87e" }}
-          >
-            <input
-              type="color"
-              aria-label="Couleur de la bande de section"
-              value={section.color || "#e8a87e"}
-              onChange={(e) => setSectionColor(section.id, e.target.value)}
-              className="absolute inset-0 cursor-pointer opacity-0"
-            />
-          </span>
-          {section.color && (
-            <IconBtn
-              label="Couleur par défaut"
-              onClick={() => setSectionColor(section.id, undefined)}
-            >
-              ⟲
-            </IconBtn>
-          )}
+          <ColorPicker
+            label="Couleur de la bande de section"
+            value={section.color}
+            defaultValue="#e8a87e"
+            onChange={(color) => setSectionColor(section.id, color)}
+            onReset={() => setSectionColor(section.id, undefined)}
+          />
           <IconBtn
             label="Monter la section"
             onClick={() => moveSection(index, index - 1)}
@@ -996,32 +962,15 @@ export function ProgrammeEditor({
                   onChange={(e) => setMeta({ titre: e.target.value })}
                 />
               </label>
-              {/* Couleur du bandeau de titre (PDF) — même mécanique que les sections ;
-                  HORS du <label> ci-dessus : un <label> ne doit envelopper qu'UN
-                  seul champ, sinon le focus/clic devient imprévisible selon le
-                  navigateur (la sélection de couleur restait "active" et bloquait
-                  la page). */}
-              <span
-                className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border"
-                title="Couleur du bandeau de titre"
-                style={{ backgroundColor: programme.titleColor || "#a3ccea" }}
-              >
-                <input
-                  type="color"
-                  aria-label="Couleur du bandeau de titre"
-                  value={programme.titleColor || "#a3ccea"}
-                  onChange={(e) => setMeta({ titleColor: e.target.value })}
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                />
-              </span>
-              {programme.titleColor && (
-                <IconBtn
-                  label="Couleur par défaut"
-                  onClick={() => setMeta({ titleColor: undefined })}
-                >
-                  ⟲
-                </IconBtn>
-              )}
+              {/* Couleur du bandeau de titre (PDF) — HORS du <label> ci-dessus :
+                  un <label> ne doit envelopper qu'UN seul champ. */}
+              <ColorPicker
+                label="Couleur du bandeau de titre"
+                value={programme.titleColor}
+                defaultValue="#a3ccea"
+                onChange={(color) => setMeta({ titleColor: color })}
+                onReset={() => setMeta({ titleColor: undefined })}
+              />
             </div>
           </div>
           <label className="flex flex-col gap-1.5">
