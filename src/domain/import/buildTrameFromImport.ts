@@ -148,8 +148,27 @@ export function injectMissingMoments(programme: Programme): Programme {
 }
 
 /**
+ * Pour la TRAME (séquence ProPresenter) : retire les libellés QUI NE PRODUISENT
+ * AUCUNE diapo (pas de `.pro`). Ces moments « en-tête » (Chant d'envoi, Temps de
+ * prière, Ouverture, Lecture de la Bible…) sont utiles au PROGRAMME imprimé mais
+ * pas à la trame, où seuls comptent les chants et les diapos-titres réelles. Les
+ * chants sont toujours conservés (contenu à projeter, `.pro` à lier au besoin).
+ * Les sections devenues vides sont retirées.
+ */
+export function dropSlidelessLabels(programme: Programme): Programme {
+  const sections = programme.sections
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((it) => it.type === 'song' || Boolean(it.proFile)),
+    }))
+    .filter((s) => s.items.length > 0);
+  return { ...programme, sections };
+}
+
+/**
  * Dérive une TRAME prête à l'emploi depuis un programme importé : structure
- * fidèle + moments courants manquants injectés + `.pro` liés. Nouvel id (la
+ * fidèle + moments courants manquants injectés + `.pro` liés, PUIS on retire les
+ * libellés sans diapo (utiles seulement au programme imprimé). Nouvel id (la
  * trame est un enregistrement distinct du programme) et `kind: 'trame'`.
  */
 export function buildTrameFromProgramme(
@@ -157,5 +176,5 @@ export function buildTrameFromProgramme(
   songs: readonly LibrarySong[],
 ): Programme {
   const linked = linkLibraryToProgramme(injectMissingMoments(programme), songs);
-  return { ...linked, id: uid(), kind: 'trame' };
+  return { ...dropSlidelessLabels(linked), id: uid(), kind: 'trame' };
 }

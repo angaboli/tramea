@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildTrameFromProgramme,
+  dropSlidelessLabels,
   injectMissingMoments,
   linkLibraryToProgramme,
 } from './buildTrameFromImport';
@@ -136,6 +137,38 @@ describe('injectMissingMoments', () => {
   });
 });
 
+describe('dropSlidelessLabels', () => {
+  it('retire les libellés sans .pro, garde chants et diapos-titres', () => {
+    const p: Programme = {
+      id: 'p',
+      date: '2026-07-25',
+      titre: 'T',
+      sections: [
+        {
+          id: 's',
+          label: "CULTE D'ADORATION",
+          items: [
+            { id: '1', type: 'label', titre: 'Chant d’envoi' }, // pas de .pro → retiré
+            { id: '2', type: 'song', titre: 'Seigneur attire', proFile: "Chant d'envoie 2026-03.pro" },
+            { id: '3', type: 'label', titre: 'Prélude', proFile: 'PRELUDE.pro' }, // diapo → gardé
+            { id: '4', type: 'song', titre: 'Chant sans pro' }, // chant → toujours gardé
+          ],
+        },
+        { id: 'vide', label: 'ANNONCES', items: [{ id: '5', type: 'label', titre: 'Annonces' }] },
+      ],
+    };
+    const out = dropSlidelessLabels(p);
+    const culte = out.sections.find((s) => s.label === "CULTE D'ADORATION")!;
+    expect(culte.items.map((i) => i.titre)).toEqual([
+      'Seigneur attire',
+      'Prélude',
+      'Chant sans pro',
+    ]);
+    // Section devenue vide (libellé sans .pro) → retirée.
+    expect(out.sections.some((s) => s.label === 'ANNONCES')).toBe(false);
+  });
+});
+
 describe('buildTrameFromProgramme', () => {
   const programme: Programme = {
     id: 'src',
@@ -147,7 +180,7 @@ describe('buildTrameFromProgramme', () => {
         id: 's',
         label: "CULTE D'ADORATION",
         items: [
-          { id: '1', type: 'label', titre: 'Prélude' },
+          { id: '1', type: 'label', titre: 'Chant d’envoi' }, // en-tête sans diapo
           { id: '2', type: 'song', titre: 'À toi la gloire', ref: 'H&L 385' },
           { id: '3', type: 'label', titre: 'Bénédiction' },
         ],
@@ -163,13 +196,13 @@ describe('buildTrameFromProgramme', () => {
     expect(trame.titre).toBe('Église Adventiste — Sabbat');
   });
 
-  it('lie les .pro (chant + moments) et injecte les moments manquants', () => {
+  it('lie les .pro, garde chant + diapos, retire les libellés en-tête sans diapo', () => {
     const culte = trame.sections.find((s) => s.label === "CULTE D'ADORATION")!;
-    const prelude = culte.items.find((i) => i.titre === 'Prélude')!;
     const chant = culte.items.find((i) => i.titre === 'À toi la gloire')!;
-    expect(prelude.proFile).toBe('PRELUDE.pro');
+    const benediction = culte.items.find((i) => i.titre === 'Bénédiction')!;
     expect(chant.proFile).toBe('À toi la gloire - H&L 385.pro');
-    // moment injecté présent
-    expect(culte.items.some((i) => i.titre === 'Bienvenue')).toBe(true);
+    expect(benediction.proFile).toBe('Bénédiction.pro');
+    // « Chant d'envoi » (libellé sans diapo) retiré de la trame.
+    expect(culte.items.some((i) => i.titre === 'Chant d’envoi')).toBe(false);
   });
 });

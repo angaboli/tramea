@@ -68,6 +68,14 @@ REGLES METIERS IMPORTANTES :
 - type : Utilise "song" uniquement pour les chants ou cantiques. Pour absolument tout le reste (priere, sermon, annonces, histoire, offrandes), utilise "label".
 - sections : Regroupe les elements en blocs coherents. Si le texte d'origine possede deja des titres de sections clairs, tu dois obligatoirement les conserver et les respecter.
 - "verset" vs "note" : Si une information textuelle provient de la Bible (comme une lecture ou une reference de texte), place-la dans "verset". Si c'est une consigne humaine ou une remarque, place-la dans "note".
+- LIGNES COMBINEES (moment + chant) : une meme ligne peut contenir A LA FOIS un moment liturgique (ex : Service de fidelite, Temps de priere, Message pour les enfants, Ouverture, Chant d'envoi...) ET un chant (un titre de cantique, souvent accompagne d'une reference de recueil comme H&L 596, JEM 595, DLG 45, et/ou d'une tonalite comme Do, La b). Dans ce cas tu DOIS produire DEUX elements distincts, dans cet ordre (le moment d'abord, le chant ensuite), et ne JAMAIS supprimer le chant :
+  1) le moment -> {type:"label"} (avec officiant/tonalite s'ils se rapportent au moment) ;
+  2) le chant -> {type:"song", titre: <titre exact du chant>, ref: <reference>, tonalite: <tonalite>}.
+  Le titre du chant ne doit JAMAIS etre mis dans "verset" ni etre supprime : s'il ne provient pas de la Bible, il devient un element "song" a part entiere.
+  Exemples :
+    "Service de fidelite | JEM 595 | Do | Ta bienveillance" -> {type:"label", titre:"Service de fidelite"} PUIS {type:"song", titre:"Ta bienveillance", ref:"JEM 595", tonalite:"Do"}
+    "Temps de priere | Do# | Anciennat | Seigneur nous voici" -> {type:"label", titre:"Temps de priere", officiant:"Anciennat"} PUIS {type:"song", titre:"Seigneur nous voici", tonalite:"Do#"}
+    "Message pour les enfants | Do -> Re | L'amour de Jesus est ma force" -> {type:"label", titre:"Message pour les enfants"} PUIS {type:"song", titre:"L'amour de Jesus est ma force", tonalite:"Do -> Re"}
 
 CONSIGNES DE SORTIE :
 - Si une information optionnelle est absente du texte brut, retire completement le champ du resultat final (ne pas laisser vide, ne pas mettre null).
