@@ -132,9 +132,11 @@ export interface CustomSong {
 
 /**
  * Reconstruit un `.pro` à partir d'un fichier de base : remplace le texte des
- * diapos (dans l'ordre) et le titre. Les diapos en trop gardent leur texte
- * d'origine ; s'il y a plus de strophes que de diapos, le surplus est ignoré.
- * Renvoie aussi le nombre de diapos retextées.
+ * diapos (dans l'ordre) et le titre. Les diapos EN TROP (le fichier de base a
+ * plus de diapos que de textes fournis) sont VIDÉES — sinon le contenu du
+ * fichier cloné fuiterait (ex. les couplets du cantique de base « J'entends ta
+ * douce voix » sous un simple verset). S'il y a plus de strophes que de diapos,
+ * le surplus de texte est ignoré. Renvoie aussi le nombre de diapos retextées.
  */
 export function retextPro(
   baseBytes: Uint8Array,
@@ -146,14 +148,14 @@ export function retextPro(
   let used = 0;
 
   const parts = top.map((f) => {
-    // Diapos
+    // Diapos : on remplace le texte par celui fourni ; les diapos en trop sont
+    // VIDÉES ("") pour ne pas laisser fuiter le contenu du fichier de base.
     if (f.field === 13 && f.wire === 2) {
       const text = song.slides[slideIdx];
       slideIdx++;
-      if (text === undefined) return reencode(f);
-      used++;
+      if (text !== undefined) used++;
       const slide = setAtPath(f.value as Uint8Array, SLIDE_RTF_PATH, (rtf) =>
-        setRtfText(rtf, text),
+        setRtfText(rtf, text ?? ''),
       );
       return encBytesField(13, slide);
     }

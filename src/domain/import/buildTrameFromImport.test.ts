@@ -152,6 +152,13 @@ describe('dropSlidelessLabels', () => {
             { id: '2', type: 'song', titre: 'Seigneur attire', proFile: "Chant d'envoie 2026-03.pro" },
             { id: '3', type: 'label', titre: 'Prélude', proFile: 'PRELUDE.pro' }, // diapo → gardé
             { id: '4', type: 'song', titre: 'Chant sans pro' }, // chant → toujours gardé
+            // Texte/verset personnalisé (label + customSong, sans .pro) → gardé.
+            {
+              id: '6',
+              type: 'label',
+              titre: 'Verset — Jean 3:16',
+              customSong: { baseProFile: 'Base.pro', slides: ['Car Dieu a tant aimé le monde'] },
+            },
           ],
         },
         { id: 'vide', label: 'ANNONCES', items: [{ id: '5', type: 'label', titre: 'Annonces' }] },
@@ -163,6 +170,7 @@ describe('dropSlidelessLabels', () => {
       'Seigneur attire',
       'Prélude',
       'Chant sans pro',
+      'Verset — Jean 3:16',
     ]);
     // Section devenue vide (libellé sans .pro) → retirée.
     expect(out.sections.some((s) => s.label === 'ANNONCES')).toBe(false);

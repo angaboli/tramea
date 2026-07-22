@@ -82,6 +82,31 @@ describe('retextPro', () => {
     expect(used).toBe(2);
   });
 
+  it('vide les diapos de base EN TROP (pas de fuite du contenu cloné)', () => {
+    // Base à 2 diapos porteuses de texte ; on ne fournit qu'UN texte (cas d'un
+    // verset cloné depuis un cantique complet).
+    const baseWithText = new Uint8Array([
+      ...encStrField(3, 'J’entends ta douce voix'),
+      ...encBytesField(13, slide('{\\rtf0\\cb3 PREMIER COUPLET DE BASE}')),
+      ...encBytesField(13, slide('{\\rtf0\\cb3 SECOND COUPLET DE BASE}')),
+    ]);
+    const { bytes: out, used } = retextPro(baseWithText, {
+      title: 'Jean 3:16',
+      slides: ['Car Dieu a tant aimé le monde'],
+    });
+    expect(used).toBe(1);
+
+    const top = walk(out);
+    const rtfOf = (sl: Uint8Array) => {
+      let b = sl;
+      for (const p of [10, 23, 2, 1, 1, 1, 13, 5]) b = u(get(walk(b), p));
+      return decodeUtf8(b);
+    };
+    const slides = getAll(top, 13).map((s) => rtfOf(u(s)));
+    expect(slides[0]).toContain('Car Dieu a tant aim'); // texte du verset
+    expect(slides[1]).not.toContain('COUPLET'); // diapo en trop vidée → pas de fuite
+  });
+
   it('régénère les UUID (identité fraîche) pour éviter tout conflit ProPresenter', () => {
     // Deux champs distincts (f2 = identité, f10 = référence média) partageant le
     // MÊME uuid d'origine, plus un uuid nul — comme dans un vrai .pro cloné.

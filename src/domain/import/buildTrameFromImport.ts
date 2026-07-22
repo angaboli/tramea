@@ -149,17 +149,22 @@ export function injectMissingMoments(programme: Programme): Programme {
 
 /**
  * Pour la TRAME (séquence ProPresenter) : retire les libellés QUI NE PRODUISENT
- * AUCUNE diapo (pas de `.pro`). Ces moments « en-tête » (Chant d'envoi, Temps de
- * prière, Ouverture, Lecture de la Bible…) sont utiles au PROGRAMME imprimé mais
- * pas à la trame, où seuls comptent les chants et les diapos-titres réelles. Les
- * chants sont toujours conservés (contenu à projeter, `.pro` à lier au besoin).
+ * AUCUNE diapo. Ces moments « en-tête » (Chant d'envoi, Temps de prière,
+ * Ouverture, Lecture de la Bible…) sont utiles au PROGRAMME imprimé mais pas à
+ * la trame. On CONSERVE tout ce qui devient une diapo à l'export :
+ *   - les chants (toujours, contenu à projeter, `.pro` à lier au besoin) ;
+ *   - tout item lié à un `.pro` (diapo-titre) ;
+ *   - les textes/versets/medleys personnalisés (`customSong` → diapos générées),
+ *     même de type « label ».
  * Les sections devenues vides sont retirées.
  */
 export function dropSlidelessLabels(programme: Programme): Programme {
   const sections = programme.sections
     .map((s) => ({
       ...s,
-      items: s.items.filter((it) => it.type === 'song' || Boolean(it.proFile)),
+      items: s.items.filter(
+        (it) => it.type === 'song' || Boolean(it.proFile) || Boolean(it.customSong),
+      ),
     }))
     .filter((s) => s.items.length > 0);
   return { ...programme, sections };
