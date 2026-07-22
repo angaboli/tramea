@@ -100,7 +100,7 @@ export default async function handler(req: any, res: any) {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-flash-latest",
       contents: `Voici le texte extrait du programme de culte :\n\n${text}`,
       config: {
         responseMimeType: "application/json",

@@ -15,6 +15,14 @@ export interface RecurringMoment {
   label: string;
   type: ItemType;
   matchKeys?: readonly string[];
+  /**
+   * Repli si `matchKeys` ne trouve rien : nom de fichier `.pro` par PRÉFIXE
+   * (accents/casse ignorés), le PREMIER par ordre alphabétique. Sert aux moments
+   * dont la diapo réelle a un suffixe variable (« TEMOIGNAGE - <nom> »,
+   * « CHANT SPECIAL - <nom> ») : on met une diapo qui ressemble plutôt qu'un
+   * chant vide. À lier/changer à la main ensuite si besoin.
+   */
+  matchPrefix?: readonly string[];
 }
 
 export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
@@ -29,17 +37,19 @@ export const RECURRING_MOMENTS: readonly RecurringMoment[] = [
   // « Groupe de prière » est un intitulé alternatif fréquent pour Intercession.
   { label: 'Intercession', type: 'label', matchKeys: ['intercession', 'groupe de priere'] },
   { label: 'Prière', type: 'label', matchKeys: ['priere'] },
-  // Contenu parlé/joué, pas de diapo-titre standard connue : à lier à la main.
-  { label: 'Témoignages', type: 'label' },
-  { label: 'Morceau instrumental', type: 'label' },
+  // Pas de diapo-titre dédiée : on met la première diapo « Témoignage » /
+  // « Chant spécial » qui ressemble (suffixe = nom de la personne), à ajuster.
+  { label: 'Témoignages', type: 'label', matchPrefix: ['temoignage'] },
+  { label: 'Morceau instrumental', type: 'label', matchPrefix: ['chant special'] },
   // Pas de diapo dédiée « à genoux »/« finale » en général → repli sur la
   // diapo-titre générique « Prière » si elle existe.
   { label: 'Prière à genoux', type: 'label', matchKeys: ['priere a genoux', 'priere'] },
   { label: 'Service de fidélité', type: 'label', matchKeys: ['service de fidelite'] },
   { label: 'Message pour les enfants', type: 'label', matchKeys: ['message pour les enfants'] },
   { label: 'Méditation / Partage', type: 'label', matchKeys: ['meditation'] },
-  // Chant différent chaque semaine : jamais de .pro par défaut.
-  { label: 'Chant spécial', type: 'song' },
+  // Chant différent chaque semaine : pas de titre fixe, mais on évite un chant
+  // vide en mettant une diapo « Chant spécial » qui ressemble (à changer).
+  { label: 'Chant spécial', type: 'song', matchPrefix: ['chant special'] },
   // Contenu (le verset) différent chaque fois : jamais de .pro par défaut. Le
   // texte biblique réel se récupère via le bouton « Texte personnalisé » de
   // l'item (Louis Segond 1910, domaine public) puis se génère en diapo à

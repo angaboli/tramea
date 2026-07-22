@@ -1,11 +1,12 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { readProgramFile } from '../../infrastructure/import/readProgramFile';
+import { importProgrammeAndTrame } from '../lib/importTrame';
 import { Badge } from '../components/Badge';
 import { NewTrameDialog } from '../components/NewTrameDialog';
 import { useSession } from '../stores/session';
 import { useProgrammeEditor } from '../stores/programmeEditor';
 import { useSavedProgrammes } from '../stores/savedProgrammes';
+import { useLibrary } from '../stores/library';
 import { countSongs } from '../../domain/trame/programme';
 import { duplicateProgramme } from '../../domain/trame/duplicate';
 import { formatFrDate } from '../../domain/trame/formatDate';
@@ -95,9 +96,17 @@ export function CreatorDashboard() {
   const resetProgramme = useProgrammeEditor((s) => s.reset);
   const loadProgramme = useProgrammeEditor((s) => s.load);
   const saved = useSavedProgrammes();
+  const songs = useLibrary((s) => s.songs);
   const [status, setStatus] = useState<string | null>(null);
   const [trameDialog, setTrameDialog] = useState(false);
   const [query, setQuery] = useState('');
+
+  // Re-synchronise la liste depuis la base à chaque affichage du tableau de bord
+  // (retour depuis l'éditeur après une création/import).
+  const refresh = saved.refresh;
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   function newProgramme() {
     resetProgramme();
@@ -122,11 +131,12 @@ export function CreatorDashboard() {
     e.target.value = '';
     if (!file) return;
     try {
-      const programme = await readProgramFile(file);
-      loadProgramme(programme);
-      navigate('/programme');
+      // Import = programme fidèle (PDF + paroles) ET trame dérivée (moments
+      // courants manquants injectés), les deux persistés ; on ouvre la trame.
+      await importProgrammeAndTrame(file, songs);
+      navigate('/trame');
     } catch {
-      setStatus("Échec de l'import du fichier.");
+      setStatus("Échec de l'import : lecture du fichier ou enregistrement impossible.");
     }
   }
 

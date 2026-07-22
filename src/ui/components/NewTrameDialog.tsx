@@ -8,8 +8,8 @@ import { searchProgrammes } from '../../domain/trame/searchProgrammes';
 import { formatFrDate, nextSaturday } from '../../domain/trame/formatDate';
 import { buildTrameTemplate } from '../../domain/trame/trameTemplate';
 import { RECURRING_MOMENTS } from '../../domain/trame/recurring';
-import { findSongByExactName } from '../../domain/library/song';
-import { readProgramFile } from '../../infrastructure/import/readProgramFile';
+import { findSongByExactName, findSongByPrefix } from '../../domain/library/song';
+import { importProgrammeAndTrame } from '../lib/importTrame';
 import { useLibrary } from '../stores/library';
 import type { Programme } from '../../domain/trame/types';
 
@@ -45,21 +45,28 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
 
   // Crée une trame à partir d'un programme : nouvel enregistrement (id propre,
   // kind 'trame') pour ne pas écraser le programme source et pouvoir la rouvrir.
-  function useProgramme(p: Programme) {
-    load({ ...p, id: crypto.randomUUID(), kind: 'trame' });
+  // Persiste immédiatement pour qu'elle apparaisse en base et dans la liste.
+  async function useProgramme(p: Programme) {
+    const trame: Programme = { ...p, id: crypto.randomUUID(), kind: 'trame' };
+    load(trame);
+    try {
+      await saved.save(trame);
+    } catch {
+      /* l'autosave prendra le relais ; on n'empêche pas l'ouverture */
+    }
     navigate('/trame');
   }
 
   function confirm() {
     const chosen = programmes.find((p) => p.id === selectedId);
-    if (chosen) useProgramme(chosen);
+    if (chosen) void useProgramme(chosen);
   }
 
   // « Partir de zéro » = squelette chronologique habituel (École du sabbat,
   // Annonces, Intercession, Culte d'adoration…) : les moments récurrents sont
   // déjà en place, avec leur .pro pré-lié si la bibliothèque connectée en a un
   // qui correspond ; les chants restent des emplacements VIDES à remplir.
-  function fromScratch() {
+  async function fromScratch() {
     const base = buildTrameTemplate(nextSaturday(), 'Sabbat');
     const p: Programme = {
       ...base,
@@ -67,24 +74,36 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
         ...s,
         items: s.items.map((it) => {
           const moment = MOMENT_BY_LABEL.get(it.titre);
-          if (!moment?.matchKeys) return it;
-          const match = findSongByExactName(songs, moment.matchKeys);
+          if (!moment) return it;
+          const match =
+            (moment.matchKeys && findSongByExactName(songs, moment.matchKeys)) ||
+            findSongByPrefix(songs, moment.matchPrefix);
           return match ? { ...it, proFile: match.name } : it;
         }),
       })),
     };
     load(p);
+    try {
+      await saved.save(p);
+    } catch {
+      /* l'autosave prendra le relais */
+    }
     navigate('/trame');
   }
 
+  // Import = scrap du PDF (Gemini reproduit fidèlement la structure d'origine),
+  // puis création de DEUX enregistrements persistés : le programme (fidèle, .pro
+  // liés → paroles au PDF) et la trame dérivée (moments courants manquants
+  // injectés). La trame est ouverte dans l'éditeur.
   async function onImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     try {
-      useProgramme(await readProgramFile(file));
+      await importProgrammeAndTrame(file, songs);
+      navigate('/trame');
     } catch {
-      setError("Échec de l'import du fichier.");
+      setError("Échec de l'import : lecture du fichier ou enregistrement impossible.");
     }
   }
 
@@ -144,7 +163,7 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
                   <li key={p.id}>
                     <button
                       onClick={() => setSelectedId(p.id)}
-                      onDoubleClick={() => useProgramme(p)}
+                      onDoubleClick={() => void useProgramme(p)}
                       className={[
                         'flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus-visible:outline-none',
                         active ? 'bg-primary-soft' : 'hover:bg-surface-hover',

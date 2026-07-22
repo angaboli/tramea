@@ -2,6 +2,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { devApi } from './vite-dev-api';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -11,6 +12,7 @@ export default defineConfig({
     cssMinify: false,
   },
   plugins: [
+    devApi(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

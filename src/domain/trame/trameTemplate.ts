@@ -14,14 +14,19 @@ import type { Programme } from './types';
 import * as edit from './edit';
 import { RECURRING_MOMENTS } from './recurring';
 
-type TemplateItem = { moment: string } | { chant: true };
+export type TemplateItem = { moment: string } | { chant: true };
 
-interface TemplateSection {
+export interface TemplateSection {
   label: string;
   items: readonly TemplateItem[];
 }
 
-const TRAME_CHRONOLOGY: readonly TemplateSection[] = [
+/**
+ * Chronologie habituelle d'un culte — squelette partagé entre la trame « à
+ * partir de zéro » (`buildTrameTemplate`) et la trame construite depuis un
+ * programme importé (`buildTrameFromImport`), qui y distribue les chants scrappés.
+ */
+export const TRAME_CHRONOLOGY: readonly TemplateSection[] = [
   {
     label: 'ÉCOLE DU SABBAT',
     items: [{ chant: true }, { chant: true }],
