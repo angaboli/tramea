@@ -102,8 +102,9 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
     try {
       await importProgrammeAndTrame(file, songs);
       navigate('/trame');
-    } catch {
-      setError("Échec de l'import : lecture du fichier ou enregistrement impossible.");
+    } catch (e) {
+      console.error('Import échoué :', e);
+      setError(`Échec de l'import${e instanceof Error ? ` (${e.message})` : ''}.`);
     }
   }
 

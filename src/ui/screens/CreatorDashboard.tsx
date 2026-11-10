@@ -135,8 +135,9 @@ export function CreatorDashboard() {
       // courants manquants injectés), les deux persistés ; on ouvre la trame.
       await importProgrammeAndTrame(file, songs);
       navigate('/trame');
-    } catch {
-      setStatus("Échec de l'import : lecture du fichier ou enregistrement impossible.");
+    } catch (err) {
+      console.error('Import échoué :', err);
+      setStatus(`Échec de l'import${err instanceof Error ? ` (${err.message})` : ''}.`);
     }
   }
 
