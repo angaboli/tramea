@@ -12,15 +12,15 @@ const ROLE_LABEL: Record<string, string> = {
 
 function Logo() {
   return (
-    <Link to="/creator" className="flex items-center gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+    <Link to="/creator" aria-label="Tramea" className="flex items-center justify-center gap-3 md:justify-start">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <line x1="3.5" y1="5" x2="14.5" y2="5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
           <line x1="3.5" y1="9" x2="11" y2="9" stroke="#FF6C1A" strokeWidth="1.8" strokeLinecap="round" />
           <line x1="3.5" y1="13" x2="14.5" y2="13" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </div>
-      <div className="leading-tight">
+      <div className="hidden leading-tight md:block">
         <div className="font-display text-lg font-semibold tracking-tight">Tramea</div>
         <div className="text-xs text-text-muted">Trames de culte</div>
       </div>
@@ -54,15 +54,17 @@ function NavItem({ to, icon, label, active }: { to: string; icon: ReactNode; lab
   return (
     <Link
       to={to}
+      title={label}
+      aria-label={label}
       className={[
-        'flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors',
+        'flex items-center justify-center gap-3 rounded-lg px-0 py-2.5 text-sm font-semibold transition-colors md:justify-start md:px-3.5',
         active
           ? 'bg-primary-soft text-primary-soft-text'
           : 'text-text-secondary hover:bg-surface-hover hover:text-text',
       ].join(' ')}
     >
       {icon}
-      {label}
+      <span className="hidden md:inline">{label}</span>
     </Link>
   );
 }
@@ -131,8 +133,8 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen bg-bg text-text">
-      <aside className="flex w-64 shrink-0 flex-col gap-1 border-r border-border bg-surface p-4">
-        <div className="mb-6 px-1">
+      <aside className="flex w-14 shrink-0 flex-col gap-1 border-r border-border bg-surface p-2 md:w-64 md:p-4">
+        <div className="mb-6 px-0 md:px-1">
           <Logo />
         </div>
         <NavItem to="/creator" icon={IconHome} label="Tableau de bord" active={pathname === '/creator'} />
@@ -147,7 +149,7 @@ export function Layout() {
         )}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-end gap-4 border-b border-border bg-surface/60 px-6 py-3">
+        <header className="flex items-center justify-end gap-3 border-b border-border bg-surface/60 px-3 py-3 md:gap-4 md:px-6">
           <ThemeToggle />
           {session?.email && (
             <UserMenu email={session.email} role={session.role} onSignOut={() => signOut()} />
