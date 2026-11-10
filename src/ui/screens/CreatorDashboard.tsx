@@ -125,8 +125,9 @@ export function CreatorDashboard() {
       const programme = await readProgramFile(file);
       loadProgramme(programme);
       navigate('/programme');
-    } catch {
-      setStatus("Échec de l'import du fichier.");
+    } catch (err) {
+      console.error('Import échoué :', err);
+      setStatus(`Échec de l'import du fichier${err instanceof Error ? ` (${err.message})` : ''}.`);
     }
   }
 

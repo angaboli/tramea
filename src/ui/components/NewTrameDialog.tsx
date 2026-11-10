@@ -83,8 +83,9 @@ export function NewTrameDialog({ onClose }: { onClose: () => void }) {
     if (!file) return;
     try {
       useProgramme(await readProgramFile(file));
-    } catch {
-      setError("Échec de l'import du fichier.");
+    } catch (e) {
+      console.error('Import échoué :', e);
+      setError(`Échec de l'import du fichier${e instanceof Error ? ` (${e.message})` : ''}.`);
     }
   }
 
