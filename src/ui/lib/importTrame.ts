@@ -8,7 +8,7 @@
  * l'autosave). Renvoie la trame chargée.
  *
  * En cas d'échec d'enregistrement (ex. base indisponible), la trame est tout de
- * même chargée dans l'éditeur et l'erreur est propagée pour affichage.
+ * même chargée dans l'éditeur ; l'échec est seulement journalisé (pas bloquant).
  */
 import type { LibrarySong } from '../../domain/library/song';
 import type { Programme } from '../../domain/trame/types';
@@ -32,9 +32,15 @@ export async function importProgrammeAndTrame(
   // échoue, l'utilisateur voit son résultat (l'autosave retentera).
   useProgrammeEditor.getState().load(trame);
 
-  const saved = useSavedProgrammes.getState();
-  await saved.save(programme);
-  await saved.save(trame);
+  // Base indisponible (projet Supabase en pause, réseau coupé…) : on ne bloque
+  // pas l'import — la trame est déjà dans l'éditeur et l'autosave retentera.
+  try {
+    const saved = useSavedProgrammes.getState();
+    await saved.save(programme);
+    await saved.save(trame);
+  } catch (e) {
+    console.warn('Import : enregistrement en base impossible, trame gardée en local.', e);
+  }
 
   return trame;
 }
