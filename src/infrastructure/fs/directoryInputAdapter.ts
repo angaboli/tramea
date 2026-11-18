@@ -32,7 +32,10 @@ export class DirectoryInputAdapter implements FileSystemPort {
     for (const f of files) {
       const rel = stripRoot((f as WithRelPath).webkitRelativePath || f.name);
       if (f.name.toLowerCase().endsWith('.pro')) {
-        if (!this.presentations.has(f.name)) {
+        // Homonymes (même nom dans plusieurs dossiers) : on garde le PLUS GROS —
+        // une copie tronquée/corrompue (ex. 195 octets) donnerait une diapo vide.
+        const known = this.presentations.get(f.name);
+        if (!known || f.size > known.file.size) {
           this.presentations.set(f.name, { file: f, relPath: rel });
         }
       } else if (isMediaPath(rel)) {

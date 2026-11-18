@@ -12,6 +12,9 @@ import { assembleProplaylistZip } from '../../infrastructure/proplaylist/assembl
 import { mediaBasenames } from '../../infrastructure/proplaylist/mediaRefs';
 import { retextPro } from '../../infrastructure/proplaylist/retextPro';
 
+/** En dessous, un .pro n'est pas une présentation valide (vide / tronqué). */
+const MIN_PRO_BYTES = 500;
+
 /** Élément de séquence en entrée : bandeau, chant lié, ou chant personnalisé (medley). */
 export type ExportItem =
   | { kind: 'header'; label: string }
@@ -83,6 +86,12 @@ export async function exportProplaylist(
     }
 
     const res = await fs.resolvePresentation(item.proFile);
+    if (res && res.bytes.length < MIN_PRO_BYTES) {
+      // Fichier .pro tronqué/corrompu : l'embarquer donnerait une diapo vide.
+      playlistItems.push({ type: 'header', label: `[A AJOUTER] ${item.label}` });
+      missingPresentations.push(`${item.label} (fichier .pro vide ou corrompu)`);
+      continue;
+    }
     if (!res) {
       // Chant introuvable : repère visible, jamais une erreur bloquante.
       playlistItems.push({ type: 'header', label: `[A AJOUTER] ${item.label}` });

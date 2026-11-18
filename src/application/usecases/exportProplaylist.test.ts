@@ -41,11 +41,23 @@ const pros: Record<string, ProResource> = {
   'Agnus Dei.pro': {
     relPath: 'Libraries/JEM/Agnus Dei.pro',
     absPath: 'C:/PP/Libraries/JEM/Agnus Dei.pro',
-    bytes: bytes('PRO...Media/Assets/fond.jpg...end'),
+    bytes: bytes('PRO...Media/Assets/fond.jpg...end' + ' '.repeat(600)),
   },
 };
 
 describe('exportProplaylist', () => {
+  it('traite un .pro tronqué/corrompu (195 octets) comme manquant, sans l’embarquer', async () => {
+    const tiny: Record<string, ProResource> = {
+      'Cassé.pro': { relPath: 'Libraries/Default/Cassé.pro', absPath: 'x', bytes: new Uint8Array(195) },
+    };
+    const res = await exportProplaylist(
+      { playlistName: 'p', items: [{ kind: 'song', label: 'Témoignage', proFile: 'Cassé.pro' }] },
+      fakeFs(tiny, {}),
+    );
+    expect(res.proCount).toBe(0);
+    expect(res.missingPresentations).toEqual(['Témoignage (fichier .pro vide ou corrompu)']);
+  });
+
   it('produit un zip valide avec data, .pro et média', async () => {
     const res = await exportProplaylist(
       { playlistName: 'sabbat 13/06/26', items },
