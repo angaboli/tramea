@@ -155,7 +155,11 @@ export function Layout() {
             <UserMenu email={session.email} role={session.role} onSignOut={() => signOut()} />
           )}
         </header>
-        <Outlet />
+        {/* Bloc pleine largeur (pas un item flex-col) : sinon une page `mx-auto`
+            prend la largeur de son contenu et déborde de l'écran sur mobile. */}
+        <div className="w-full min-w-0 flex-1">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
