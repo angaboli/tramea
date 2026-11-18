@@ -12,7 +12,7 @@ const CAT_RE =
   /\b(H\s*&\s*L|H&L|HL|JEM\s*KIDS|JEMK|JEM|ATG|DLG|AF|UAGF|EDS)\s*[-–]?\s*(\d{1,4})\b/i;
 
 const KEY_RE =
-  /^(do|re|ré|mi|fa|sol|la|si|ut)\s*[#b]?\s*(?:(?:->|→|>)\s*(do|re|ré|mi|fa|sol|la|si|ut)\s*[#b]?)?$/i;
+  /^(do|re|ré|mi|fa|sol|la|si|ut)\s*[#b♭♯]?(?:\s*\([^)]*\))?(?:\s*(?:->|→|>|[-–—])\s*(do|re|ré|mi|fa|sol|la|si|ut)\s*[#b♭♯]?)?$/i;
 
 const PERSON_RE = /^[A-ZÀ-Ÿ][\wÀ-ÿ'’-]+(\s+[A-ZÀ-Ÿ]\.?)?$/;
 
@@ -40,6 +40,7 @@ const LITURGY = [
   'priere a genoux', 'benediction', 'message pour les enfants', 'message des enfants',
   'histoire des enfants', 'annonces', 'annonce', 'lecture', 'offrande',
   'service de fidelite', 'intercession', 'predication', 'accueil', 'chant d envoi',
+  'ouverture', 'temps de priere',
 ];
 
 const DOC_HEADERS = ['eglise', 'adventiste', 'paroisse', 'programme du culte'];
@@ -138,9 +139,23 @@ export function parseProgramText(text: string): Programme {
       sections.push(current);
     }
   };
-  const add = (type: ItemType, t: string, ref?: string) => {
+  const add = (
+    type: ItemType,
+    t: string,
+    ref?: string,
+    extra: { tonalite?: string; officiant?: string; note?: string; lien?: string } = {},
+  ) => {
     ensure();
-    current!.items.push({ id: uid(), type, titre: t, ref: ref || undefined });
+    current!.items.push({
+      id: uid(),
+      type,
+      titre: t,
+      ref: ref || undefined,
+      ...(extra.tonalite && { tonalite: extra.tonalite }),
+      ...(extra.officiant && { officiant: extra.officiant }),
+      ...(extra.note && { note: extra.note }),
+      ...(extra.lien && { lien: extra.lien }),
+    });
   };
 
   for (const raw of lines) {
@@ -168,24 +183,62 @@ export function parseProgramText(text: string): Programme {
       if (['titre', 'chant', 'element', 'rubrique'].includes(norm(rubric0))) continue;
       const rowRef = extractRef(raw);
       const rubric = rubric0.replace(CAT_RE, '').replace(/\s+/g, ' ').trim() || rubric0;
+      const tonalite = cells.slice(1).find((c) => c && isKey(c.replace(CAT_RE, '').trim())) ?? '';
 
+      // Rangée « Élément | remarque » (cellules fusionnées) : le texte de droite
+      // est un officiant/département ou une remarque (« bande son »), pas un chant.
+      if (cells.length === 2 && cells[1] && isLiturgy(rubric)) {
+        const side = cells[1];
+        const url = side.match(/https?:\/\/\S+/)?.[0];
+        if (url) {
+          // « Enfants de la terre : https://… » → lien cliquable + remarque.
+          const note = side.replace(url, '').replace(/[\s:–-]+$/, '').trim();
+          add('label', rubric, undefined, { note, lien: url });
+        } else {
+          add('label', rubric, undefined, /\(/.test(side) ? { note: side } : { officiant: side });
+        }
+        continue;
+      }
+
+      // « Chant avant la méditation », « Chant Final » : intitulés de moment (pas
+      // un titre de chant) quand la 5e colonne porte le vrai chant.
+      const chantRubric =
+        /^chant\s/i.test(rubric) && !/[:«]/.test(rubric) && cells.length >= 5 && !!cells[4];
+      const rubricIsLabel = isLiturgy(rubric) || chantRubric;
+
+      // Tableau à 5 colonnes (Élément | Réf | Tonalité | N° | Chant/remarque) :
+      // pour un moment, la dernière colonne porte le chant projeté ; pour un
+      // chant déjà nommé en 1re colonne, c'est une remarque (« Strophes 1,2 et 4 »).
       let trailing = '';
       let trailingRef = '';
-      for (const c of nonEmpty.slice(1)) {
-        const cc = c.replace(CAT_RE, '').trim();
-        if (!cc || isKey(cc) || isPerson(cc)) continue;
-        if (cc.split(/\s+/).filter((w) => w.length > 1).length >= 2) {
-          trailing = cc;
-          trailingRef = extractRef(c);
-          break;
+      let officiant = '';
+      let note = '';
+      if (cells.length >= 5 && cells[4] && !CAT_RE.test(cells[4]) && !isKey(cells[4])) {
+        if (rubricIsLabel) {
+          trailing = cells[4].replace(CAT_RE, '').trim();
+          trailingRef = extractRef(cells[4]);
+        } else {
+          note = cells[4];
+        }
+        const o = cells[3];
+        if (o && !/^\d+$/.test(o)) officiant = o;
+      } else {
+        for (const c of nonEmpty.slice(1)) {
+          const cc = c.replace(CAT_RE, '').trim();
+          if (!cc || isKey(cc) || isPerson(cc)) continue;
+          if (cc.split(/\s+/).filter((w) => w.length > 1).length >= 2) {
+            trailing = cc;
+            trailingRef = extractRef(c);
+            break;
+          }
         }
       }
 
-      if (isLiturgy(rubric)) {
-        add('label', rubric);
-        if (trailing) add('song', trailing, trailingRef || rowRef);
+      if (rubricIsLabel) {
+        add('label', rubric, undefined, { officiant });
+        if (trailing) add('song', trailing, trailingRef || rowRef, { tonalite });
       } else {
-        add('song', rubric, extractRef(rubric0) || rowRef);
+        add('song', rubric, extractRef(rubric0) || rowRef, { tonalite, officiant, note });
         if (trailing && norm(trailing) !== norm(rubric)) add('song', trailing, trailingRef);
       }
       continue;

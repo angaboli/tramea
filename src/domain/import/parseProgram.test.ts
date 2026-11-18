@@ -55,4 +55,36 @@ describe('parseProgramText', () => {
     // une seule section "ÉCOLE DU SABBAT"
     expect(p.sections.filter((s) => s.label === 'ÉCOLE DU SABBAT')).toHaveLength(1);
   });
+
+  it('rangée « Élément | remarque » fusionnée : officiant ou remarque, jamais un chant', () => {
+    const p = parseProgramText(
+      [
+        'Sabbat 7 novembre 2026',
+        "CULTE D'ADORATION",
+        '| Invocation | Département Prière |',
+        '| Prélude | O Come To The Altar (bande son) |',
+      ].join('\n'),
+    );
+    const items = p.sections[0].items;
+    expect(items).toHaveLength(2);
+    expect(items[0]).toMatchObject({ type: 'label', titre: 'Invocation', officiant: 'Département Prière' });
+    expect(items[1]).toMatchObject({ type: 'label', titre: 'Prélude', note: 'O Come To The Altar (bande son)' });
+  });
+
+  it('tableau à 5 colonnes : chant en dernière colonne, tonalité et officiant captés', () => {
+    const p = parseProgramText(
+      [
+        'TEMPS DE LOUANGES',
+        '| Temps de prière |  | Do (A041) | Anciennat | Tu es Dieu |',
+        '| Ouverture | JEM 906 | Mi |  | Hosanna |',
+        '| En Jésus seul | JEM 1004 | Ré->Mi | 042 |  |',
+      ].join('\n'),
+    );
+    const it = p.sections[0].items;
+    expect(it[0]).toMatchObject({ type: 'label', titre: 'Temps de prière', officiant: 'Anciennat' });
+    expect(it[1]).toMatchObject({ type: 'song', titre: 'Tu es Dieu', tonalite: 'Do (A041)' });
+    expect(it[2]).toMatchObject({ type: 'label', titre: 'Ouverture' });
+    expect(it[3]).toMatchObject({ type: 'song', titre: 'Hosanna', ref: 'JEM 906', tonalite: 'Mi' });
+    expect(it[4]).toMatchObject({ type: 'song', titre: 'En Jésus seul', ref: 'JEM 1004', tonalite: 'Ré->Mi' });
+  });
 });
